@@ -33,6 +33,8 @@ var abra={
     $("#abra_work").hide();
     $("#abra_result").hide();
 	
+	
+	
   },
   start:function(){
     $("#abra_work").show();
@@ -48,6 +50,13 @@ var abra={
 	this.start_time=this.Now  ();
 	this.gen_test();
 	$("#abra_result").html("");
+	self=this;
+	$("#abra_ansver").keydown(function(event)
+	   { if (event.which == 13) {
+	        event.preventDefault();
+	        self.check();
+	    }
+	   });
   },
   
   randA: function(){
@@ -181,7 +190,7 @@ abra_intf=abra;
 <div id="abra_is_error" style="display:none">Неправильно! попробуйте еще раз.</div>
 </div>
 <div id="abra_work_ansver">
-<input type="text" id="abra_ansver"  onkeydown="if (event.keyCode==13) {abra.check();};"/>
+<input type="text" id="abra_ansver"/>
 <input type="button" id="abra_check_ansver" value="Проверить" onClick="abra.check()">
 </div>
 </div>

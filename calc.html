@@ -38,9 +38,9 @@ var verb_acc={
     $('#verb_acc_div_control').show();
   },
   hideAll:function(){
-  alert(1);
+  
     $('#verb_acc_div_control').hide();
-  alert(1);
+  
     $('#verb_acc_div_tst').hide();
     $('#verb_acc_check_res').hide();
     $('#verb_acc_totals').hide();
@@ -63,7 +63,15 @@ var verb_acc={
      this.genTest();
      $("#verb_acc_check_res").html("");
      $('#verb_acc_totals').html("");
+	 self=this;
+	 $('#verb_acc_answer').keydown(function(event)
+	   { if (event.which == 13) {
+	        event.preventDefault();
+	        self.checkTest();
+	    }
+	   }
 	 
+	 );
   },
 
 
@@ -182,7 +190,7 @@ checkTest: function ()
 </div>
 
 <div id="verb_acc_div_tst" style="display:none">
-<span id="verb_acc_sample"></span>=<input type="text" id="verb_acc_answer" onkeydown="if (event.keyCode==13) {verb_acc.checkTest();};">
+<span id="verb_acc_sample"></span>=<input type="text" id="verb_acc_answer" >
 <input type="button" id="verb_acc_btn_check" value="Проверить" onClick="verb_acc.checkTest()"></div>
 <div id="verb_acc_check_res"></div><p>
 <div id="verb_acc_totals"></div>
