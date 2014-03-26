@@ -1,0 +1,113 @@
+<job>
+<!-- https://github.com/jashkenas/coffee-script/raw/master/extras/coffee-script.js -->
+<script src="coffee-script.js" language="JScript" />
+<script language="JScript">
+(function() {    
+   var args = [];    
+   for (var i = 0; i < WScript.Arguments.Length; i++) {        
+      args.push(WScript.Arguments.Item(i));    
+   }    
+   // FileSystemObject: http://msdn.microsoft.com/en-us/library/bkx696eh.aspx    
+   var fso = new ActiveXObject("Scripting.FileSystemObject");    
+   var isfolder = (args[0] && fso.folderExists(args[0]));    
+    if (isfolder) {        
+       f = fso.getFolder(args[0]);        
+       e = new Enumerator(f.files);        
+       for (; !e.atEnd(); e.moveNext()) {            
+          if (e.item().path.toLowerCase().lastIndexOf('.coffee') != -1) {                
+             convert(e.item(), args[1]);            
+          }        
+       }    
+    } else {        
+      convert(args[0], args[1])    
+    }
+})();
+
+  function repeat(str, n) {
+    var res;
+    res = '';
+    while (n > 0) {
+      if (n & 1) {
+        res += str;
+      }
+      n >>>= 1;
+      str += str;
+    }
+    return res;
+  };
+
+
+  function prettyErrorMessage(error, fileName, code) {
+    var codeLine, colorize, end, first_column, first_line, last_column, last_line, marker, message, start, _ref;
+    if (!error.location) {
+      return error.message + (error.stack || ("" + error));
+    }
+    _ref = error.location, first_line = _ref.first_line, first_column = _ref.first_column, last_line = _ref.last_line, last_column = _ref.last_column;
+    codeLine = code.split('\n')[first_line];
+    start = first_column;
+    end = first_line === last_line ? last_column + 1 : codeLine.length;
+    marker = repeat(' ', start) + repeat('^', end - start);
+    message = "" + fileName + " line:" + (first_line + 1) + " column:" + (first_column + 1) + ": error: " + error.message + "\n" + codeLine + "\n" + marker;
+    return message;
+  };
+
+
+
+function convert(input, output) 
+{   
+   var fso = new ActiveXObject("Scripting.FileSystemObject");    
+   if (output) {        
+      // if output specifies a folder name, output filename is same as input filename with .coffee extension        
+      if (fso.folderExists(output)) {            
+          output = output + '\\' + fso.getFile(input).name.replace('\.coffee', '.js')        }    }    
+          var coffee;    
+          if (!input) {         
+             // Read all input data from STDIN        
+             var chunks = [];       
+             while (!WScript.StdIn.AtEndOfStream)   
+                chunks.push(WScript.StdIn.ReadAll());        
+             coffee = chunks.join('');    
+          }    
+          else {        
+            coffee = readUtf8(input);    
+          }    
+          try {        
+             var cs = CoffeeScript;                
+             var js = cs.compile(coffee);                
+             if (!output) {            
+                 WScript.StdOut.Write(js);        
+             }        
+             else {            
+                 writeUtf8(output, js);        
+             }    
+          }    
+          catch (err) {        
+            WScript.StdErr.WriteLine(prettyErrorMessage(err,input,coffee));        
+            WScript.Quit(1);    
+          }
+}
+
+function readUtf8(filename) {	
+var stream = new ActiveXObject("ADODB.Stream");	
+stream.Open();	
+stream.Type = 2; 
+// Text	
+stream.Charset = 'utf-8';	
+stream.LoadFromFile(filename);	
+var text = stream.ReadText();	
+stream.Close();	return text;
+}
+
+function writeUtf8(filename, text) {	
+var stream = new ActiveXObject("ADODB.Stream");	
+stream.Open();	
+stream.Type = 2; 
+// Text	
+stream.Charset = 'utf-8';	
+stream.WriteText(text);	
+stream.SaveToFile(filename, 2);	
+stream.Close();
+}
+
+</script>
+</job>

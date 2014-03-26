@@ -1,0 +1,77 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
+ 
+</head>
+<body bgcolor="#FFFFF0">
+
+<div id="moves_root" >
+<script src="bee.js"></script>
+<h2>МУХА</h2> 
+<div id="moves_debug"></div>
+<div id="moves_description" >Игра заключается в слежении за перемещением воображаемых точек по полю. Сложность зависит от количества точек, вида и дальности перемещения, возможность "отражения" от стенок поля, возможности "отмены" хода. Нумерация полей, на примере поля 3*3 - левая нижняя клетка - a1, правая верхняя с3. Начальное полжение "мух" - 
+1 - левый нижний угол, 2 - левый нижний и правый верхний, 3 - те же + правый нижний, 4 - все углы. 
+</div>   
+<div id="moves_ctrl">
+<table>
+<tr>
+<td><B>Размер поля: </B></td><td>
+<select id='moves_field_size'>
+<option value='3'>3</option>
+<option value='4'>4</option>
+<option value='5'>5</option>
+<option value='6'>6</option>
+<option value='7'>7</option>
+<option value='8'>8</option>
+<option value='9'>9</option>
+</select></td>
+</tr>
+<tr>
+<td><b>Кол-во точек: <b></td><td>
+<select id='moves_point_cnt'>
+<option value='1'>1</option>
+<option value='2'>2</option>
+<option value='3'>3</option>
+<option value='4'>4</option>
+</select></td>
+</tr>
+<tr>
+<td><b>Число ходов: <b></td><td>
+<select id='moves_step_cnt'>
+<option value='3'>3</option>
+<option value='5'>5</option>
+<option value='7'>7</option>
+<option value='10'>10</option>
+<option value='15'>15</option>
+<option value='20'>20</option>
+</select></td>
+</tr>
+</table>
+
+<input type="button" id="moves_btn_game" value="Игра" onClick="moves.start()">
+<input type="button" id="moves_btn_learn" value="Обучение" onClick="moves.start_learn()">
+</div>
+<div id="moves_work"  style="display:none">
+<h2>Начальная расстановка</h2>
+<div id="moves_init_pos"></div>
+<input type="button" id="moves_next" value="Дальше" onClick="moves.next()">
+<div id="moves_quest"></div>
+</div>
+<div id="moves_learn"  style="display:none"></div>
+<div id="moves_result"  style="display:none">
+<table>
+<tr><th>Точка</th><th>Позиция</th><th>Прав.поз</th></tr>
+<tr id="moves_ansv_row1"><td>1</td> <td><input type="text" id="moves_ansv1"/></td> <td id="moves_tr1"></td> </tr>
+<tr id="moves_ansv_row2"><td>2</td> <td><input type="text" id="moves_ansv2"/></td> <td id="moves_tr2"></td> </tr>
+<tr id="moves_ansv_row3"><td>3</td> <td><input type="text" id="moves_ansv3"/></td> <td id="moves_tr3"></td> </tr>
+<tr id="moves_ansv_row4"><td>4</td> <td><input type="text" id="moves_ansv4"/></td> <td id="moves_tr4"></td> </tr>
+</table>
+<input type="button" id="moves_btn_check" value="Проверить" onClick="moves.check()"><p>
+<div id="moves_true_cnt"></div>
+</div>
+</div>
+
+</body>
+</html>
