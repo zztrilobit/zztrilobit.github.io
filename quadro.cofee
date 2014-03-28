@@ -1,0 +1,6 @@
+class Quadro
+    constructor: () ->
+	learn_click: () ->
+	game_click: () ->
+	next_click: () ->
+	check_click: () ->

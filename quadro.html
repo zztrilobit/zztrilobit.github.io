@@ -1,0 +1,70 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
+ 
+</head>
+<body bgcolor="#FFFFF0">
+
+<div id="quadro_rub_root" >
+<script src="quadro_rub.js"></script>
+<div id="moves_description" >
+(В разработке)<p>
+представим себе квадрат 3*3 заполненный цифрами от 1 до 9 - слева направо, сверху вниз
+<p>123<p>
+456<p>
+789<p>
+выберем из него 4 ячейки в левом верхнем углу - 
+<p>12<p>
+45<p>
+<p>
+повернем по часовой стрелке
+<p>41<p>
+52<p>
+<p>
+и поставим на место
+<p>413<p>
+526<p>
+789<p>
+ 
+</div>   
+<div id="quadro_rub_ctrl">
+<tr>
+<td><b>Число ходов: <b></td><td>
+<select id='quadro_rub_cnt'>
+<option value='3'>3</option>
+<option value='5'>5</option>
+<option value='7'>7</option>
+<option value='10'>10</option>
+<option value='15'>15</option>
+<option value='20'>20</option>
+</select></td>
+</tr>
+</table>
+
+<input type="button" id="quadro_rub_btn_game" value="Игра" >
+<input type="button" id="quadro_rub_btn_learn" value="Обучение" >
+</div>
+<div id="quadro_rub_work"  style="display:none">
+<h2>Начальная расстановка</h2>
+<div id="quadro_rub_init_pos"></div>
+<input type="button" id="quadro_rub_btn_next" value="Дальше" >
+<div id="quadro_rub_quest"></div>
+</div>
+<div id="quadro_rub_learn"  style="display:none"></div>
+<div id="quadro_rub_result"  style="display:none">
+<table>
+<tr><th>Точка</th><th>Позиция</th><th>Прав.поз</th></tr>
+<tr id="moves_ansv_row1"><td>1</td> <td><input type="text" id="moves_ansv1"/></td> <td id="moves_tr1"></td> </tr>
+<tr id="moves_ansv_row2"><td>2</td> <td><input type="text" id="moves_ansv2"/></td> <td id="moves_tr2"></td> </tr>
+<tr id="moves_ansv_row3"><td>3</td> <td><input type="text" id="moves_ansv3"/></td> <td id="moves_tr3"></td> </tr>
+<tr id="moves_ansv_row4"><td>4</td> <td><input type="text" id="moves_ansv4"/></td> <td id="moves_tr4"></td> </tr>
+</table>
+<input type="button" id="quadro_rub_btn_check" value="Проверить" ><p>
+<div id="moves_true_cnt"></div>
+</div>
+</div>
+
+</body>
+</html>
