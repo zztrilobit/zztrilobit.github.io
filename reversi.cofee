@@ -1,0 +1,16 @@
+
+class Reversi
+    constructor: () ->
+    learn_click: () ->
+    init: () -> 
+        tbl=$("#root").append $('<table ></table>')
+        for i in [1..8] 
+            row=tbl.append $('<row></row>')
+            for j in [1..8]
+                row.append $('<td id="' + i + '_' + j + '">' + i + '_' + j + '</td>') 
+
+
+reversi= new Reversi
+window.g_reversi = reversi
+
+$(document).ready () -> reversi.init()
