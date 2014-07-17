@@ -6,31 +6,58 @@ class Cell
         @state=state
         @display()
     roll: () ->
-        alert @state
         switch @state
             when 1 then @state=2
             when 2 then @state=1
-        alert @state
         @display()
     display: () ->
         switch @state
-            when 0 then @td.html('.')
-            when 1 then @td.html('1')
-            when 2 then @td.html('2')
+            when 0 then @td.html(' ')
+            when 1 then @td.html('X')
+            when 2 then @td.html('O')
 			
 	
 			
 class Reversi
     constructor: () ->
-    onCellClick: (i,j) ->
-        alert(i+' '+j)    
-        flips = @getFlips(i,j,1)
-        #alert(flips)
+    roll: (flips) ->
         for flip in flips
-            alert('roll'+flip)
             @field[flip[0]][flip[1]].roll()
+    
+    onCellClick: (i,j) ->
+        flips = @getFlips(i,j,1)
+        if flips.length>0
+            @field[i][j].setState(1)
+            @roll(flips)
         return
+        r=@findAnyMove()
+        if r.flips.length>0
+            @field[r.y][r.x].setState(2)
+            @roll(r.flips)
+        return
+        
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
+    
+    findAnyMove: () ->
+        tmpflips=[]
+        foundflips=[]
+        found_y=0
+        found_x=0
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                tmpflips=@getFlips(i,j,2)
+                if tmpflips.length>foundflips.length
+                    alert(tmpflips)
+                    foundflips=[]
+                    found_y=i
+                    found_x=j
+                    for t in tmpflips 
+                        foundflips.push(t)
+        result=
+            x:found_x
+            y:found_y
+            flips:foundflips
+        return result
     
     getFlips: (y,x,p) ->
         if @field[y][x].state!=0 
@@ -62,7 +89,7 @@ class Reversi
             if (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx].state=p)
                 for t in temp 
                     flips.push(a2(t[0],t[1]))
-        return flips
+        return  flips
         
         
     init: () -> 
@@ -70,9 +97,9 @@ class Reversi
         tbl.appendTo($("#root"))
         @field_size = 8
         @field=([1..@field_size+1] for i in [1..@field_size+1])
-        for i in [1..8] 
+        for i in [1..@field_size] 
             row=$('<row></row>')
-            for j in [1..8]
+            for j in [1..@field_size]
                 cell=$('<td valign="middle" align="center" width="60" height="60" id="' + i + '_' + j + '"></td>')
                 cell.appendTo(row)
                 cc = new Cell(i,j,cell)

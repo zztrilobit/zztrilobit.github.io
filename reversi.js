@@ -19,7 +19,6 @@
     };
 
     Cell.prototype.roll = function() {
-      alert(this.state);
       switch (this.state) {
         case 1:
           this.state = 2;
@@ -27,18 +26,17 @@
         case 2:
           this.state = 1;
       }
-      alert(this.state);
       return this.display();
     };
 
     Cell.prototype.display = function() {
       switch (this.state) {
         case 0:
-          return this.td.html('.');
+          return this.td.html(' ');
         case 1:
-          return this.td.html('1');
+          return this.td.html('X');
         case 2:
-          return this.td.html('2');
+          return this.td.html('O');
       }
     };
 
@@ -49,14 +47,28 @@
   Reversi = (function() {
     function Reversi() {}
 
-    Reversi.prototype.onCellClick = function(i, j) {
-      var flip, flips, _i, _len;
-      alert(i + ' ' + j);
-      flips = this.getFlips(i, j, 1);
+    Reversi.prototype.roll = function(flips) {
+      var flip, _i, _len, _results;
+      _results = [];
       for (_i = 0, _len = flips.length; _i < _len; _i++) {
         flip = flips[_i];
-        alert('roll' + flip);
-        this.field[flip[0]][flip[1]].roll();
+        _results.push(this.field[flip[0]][flip[1]].roll());
+      }
+      return _results;
+    };
+
+    Reversi.prototype.onCellClick = function(i, j) {
+      var flips, r;
+      flips = this.getFlips(i, j, 1);
+      if (flips.length > 0) {
+        this.field[i][j].setState(1);
+        this.roll(flips);
+      }
+      return;
+      r = this.findAnyMove();
+      if (r.flips.length > 0) {
+        this.field[r.y][r.x].setState(2);
+        this.roll(r.flips);
       }
     };
 
@@ -66,6 +78,35 @@
           return _this.onCellClick(i, j);
         };
       })(this);
+    };
+
+    Reversi.prototype.findAnyMove = function() {
+      var found_x, found_y, foundflips, i, j, result, t, tmpflips, _i, _j, _k, _len, _ref, _ref1;
+      tmpflips = [];
+      foundflips = [];
+      found_y = 0;
+      found_x = 0;
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          tmpflips = this.getFlips(i, j, 2);
+          if (tmpflips.length > foundflips.length) {
+            alert(tmpflips);
+            foundflips = [];
+            found_y = i;
+            found_x = j;
+            for (_k = 0, _len = tmpflips.length; _k < _len; _k++) {
+              t = tmpflips[_k];
+              foundflips.push(t);
+            }
+          }
+        }
+      }
+      result = {
+        x: found_x,
+        y: found_y,
+        flips: foundflips
+      };
+      return result;
     };
 
     Reversi.prototype.getFlips = function(y, x, p) {
@@ -112,7 +153,7 @@
     };
 
     Reversi.prototype.init = function() {
-      var cc, cell, i, j, n, row, tbl, _i, _j;
+      var cc, cell, i, j, n, row, tbl, _i, _j, _ref, _ref1;
       tbl = $('<table border="2" cellpadding="2" cellspacing="0"></table>');
       tbl.appendTo($("#root"));
       this.field_size = 8;
@@ -128,9 +169,9 @@
         }
         return _results;
       }).call(this);
-      for (i = _i = 1; _i <= 8; i = ++_i) {
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         row = $('<row></row>');
-        for (j = _j = 1; _j <= 8; j = ++_j) {
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
           cell = $('<td valign="middle" align="center" width="60" height="60" id="' + i + '_' + j + '"></td>');
           cell.appendTo(row);
           cc = new Cell(i, j, cell);
