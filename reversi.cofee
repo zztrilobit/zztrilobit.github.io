@@ -29,7 +29,7 @@ class Reversi
         if flips.length>0
             @field[i][j].setState(1)
             @roll(flips)
-        return
+        
         r=@findAnyMove()
         if r.flips.length>0
             @field[r.y][r.x].setState(2)
@@ -86,7 +86,7 @@ class Reversi
                 ny=ny+dy
                 
             #и если уперлись в чужую ссыплем в ответ    
-            if (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx].state=p)
+            if (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx].state==p)
                 for t in temp 
                     flips.push(a2(t[0],t[1]))
         return  flips

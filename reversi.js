@@ -64,7 +64,6 @@
         this.field[i][j].setState(1);
         this.roll(flips);
       }
-      return;
       r = this.findAnyMove();
       if (r.flips.length > 0) {
         this.field[r.y][r.x].setState(2);
@@ -142,7 +141,7 @@
           nx = nx + dx;
           ny = ny + dy;
         }
-        if ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx].state = p)) {
+        if ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx].state === p)) {
           for (_l = 0, _len3 = temp.length; _l < _len3; _l++) {
             t = temp[_l];
             flips.push(a2(t[0], t[1]));
