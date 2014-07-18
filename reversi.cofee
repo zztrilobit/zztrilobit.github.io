@@ -16,13 +16,98 @@ class Cell
             when 1 then @td.html('<b>X</b>')
             when 2 then @td.html('<b>O</b>')
 
-class Move
-    constructor: () ->
-        @side=-1
-        @x=-1
-        @y=-1
-        @flips=[]
-			
+class ReversiBoard
+    constructor: (fs)->
+        @field_size = fs
+        @field=([1..@field_size+1] for i in [1..@field_size+1])
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                @field[i][j]=0
+                
+        n=@field_size/2
+        @field[n][n]=1
+        @field[n+1][n+1]=1
+        @field[n][n+1]=2
+        @field[n+1][n]=2
+        
+    clone:() ->
+        res= new ReversiBoard(@field_size)
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                res.field[i][j]=@field[i][j]
+        
+    roll: (y,x) ->
+        switch @field[y][x]
+            when 1 then n=2
+            when 2 then n=1
+            else 0
+        @field[y][x]=n
+
+    getFlips: (y,x,p) ->
+        if @field[y][x]!=0 
+            return []
+        
+        dirs=[]
+        a2= (x,y) -> return [x,y]
+        flips=[]
+        
+        for i in [-1,0,1]
+            for j in [-1,0,1]
+                if (i!=0) || (j!=0) then dirs.push a2(i,j)
+        
+        #цикл по направлениям
+        for dir in dirs
+            dy=dir[0]
+            dx=dir[1]
+            nx=x+dx
+            ny=y+dy
+            
+            #идем по направлению по своим фишкам
+            temp=[]
+            while (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx]!=0) and (@field[ny][nx]!=p)
+                temp.push ((y:ny,x:nx))
+                nx=nx+dx
+                ny=ny+dy
+                
+            #и если уперлись в чужую ссыплем в ответ    
+            if (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx]==p)
+                for t in temp
+                    flip=(y:t.y,x:t.x)
+                    flips.push flip
+        return  flips
+        
+    apply: (flips) ->
+        for flip in flips 
+            @roll(flip.y,flip.x)
+
+    score: () ->
+        scoreX=0
+        scoreY=0
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                scoreX++ if @field[i][j]=1
+                scoreO++ if @field[i][j]=2
+        return (sx:scoreX,so:scoreO)
+        
+    possibleMoves: (side) ->
+        tmpflips=[]
+        foundflips=[]
+        found_y=0
+        found_x=0
+        moves=[]
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                tmpflips=@getFlips(i,j,side)
+                if tmpflips.length>0
+                    foundflips=[]
+                    found_y=i
+                    found_x=j
+                    moves.push((y:found_y, x:found_x, flips:tmpflips))
+        
+        return moves
+        
+
+########################################################			
 class Reversi
     constructor: () ->
     roll: (flips) ->
