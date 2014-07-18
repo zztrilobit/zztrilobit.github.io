@@ -128,7 +128,7 @@ class Reversi
         btn_init.click ()=>@initField()
         
         ctrldiv.appendTo($("#root"))
-        tbl=$('<table border="2" cellpadding="1" cellspacing="1" rules="all"></table>')
+        tbl=$('<table></table>')
         tbl.appendTo($("#root"))
         @field_size = 8
         @field=([1..@field_size+1] for i in [1..@field_size+1])

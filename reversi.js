@@ -201,7 +201,7 @@
         };
       })(this));
       ctrldiv.appendTo($("#root"));
-      tbl = $('<table border="2" cellpadding="1" cellspacing="1" rules="all"></table>');
+      tbl = $('<table></table>');
       tbl.appendTo($("#root"));
       this.field_size = 8;
       this.field = (function() {
