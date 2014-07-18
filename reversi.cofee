@@ -13,8 +13,8 @@ class Cell
     display: () ->
         switch @state
             when 0 then @td.html(' ')
-            when 1 then @td.html('X')
-            when 2 then @td.html('O')
+            when 1 then @td.html('<b>X</b>')
+            when 2 then @td.html('<b>O</b>')
 
 class Move
     constructor: () ->
@@ -135,7 +135,7 @@ class Reversi
         for i in [1..@field_size] 
             row=$('<row></row>')
             for j in [1..@field_size]
-                cell=$('<td valign="middle" align="center" width="60" height="60" id="' + i + '_' + j + '"></td>')
+                cell=$('<td valign="middle" align="center" width=40 height=40></td>')
                 cell.appendTo(row)
                 cc = new Cell(i,j,cell)
                 cc.setState(0)				

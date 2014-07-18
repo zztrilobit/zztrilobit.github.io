@@ -34,9 +34,9 @@
         case 0:
           return this.td.html(' ');
         case 1:
-          return this.td.html('X');
+          return this.td.html('<b>X</b>');
         case 2:
-          return this.td.html('O');
+          return this.td.html('<b>O</b>');
       }
     };
 
@@ -219,7 +219,7 @@
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         row = $('<row></row>');
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          cell = $('<td valign="middle" align="center" width="60" height="60" id="' + i + '_' + j + '"></td>');
+          cell = $('<td valign="middle" align="center" width=40 height=40></td>');
           cell.appendTo(row);
           cc = new Cell(i, j, cell);
           cc.setState(0);
