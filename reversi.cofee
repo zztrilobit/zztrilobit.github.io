@@ -15,8 +15,13 @@ class Cell
             when 0 then @td.html(' ')
             when 1 then @td.html('X')
             when 2 then @td.html('O')
-			
-	
+
+class Move
+    constructor: () ->
+        @side=-1
+        @x=-1
+        @y=-1
+        @flips=[]
 			
 class Reversi
     constructor: () ->
@@ -29,25 +34,43 @@ class Reversi
         if flips.length>0
             @field[i][j].setState(1)
             @roll(flips)
+        else 
+            r=@findAnyMove(1)
+            if r.flips.length>0 
+                alert "Ход неверен, есть возможность правильного хода"
+                return
+        myMove=(1==1)
+        done=(1==0)
+        @calc()
+        r=@findAnyMove(2)
+        while myMove and (not done) 
+            if r.flips.length>0
+                @field[r.y][r.x].setState(2)
+                @roll(r.flips)
+                
+            r=@findAnyMove(1)
+            if r.flips.length>0
+                myMove=(1==0)
+            else
+                r=@findAnyMove(2)
+                done=(r.flips.length == 0)
+        @calc()
+        alert("Game over!") if done
         
-        r=@findAnyMove()
-        if r.flips.length>0
-            @field[r.y][r.x].setState(2)
-            @roll(r.flips)
         return
         
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
     
-    findAnyMove: () ->
+    findAnyMove: (side) ->
         tmpflips=[]
         foundflips=[]
         found_y=0
         found_x=0
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                tmpflips=@getFlips(i,j,2)
+                tmpflips=@getFlips(i,j,side)
                 if tmpflips.length>foundflips.length
-                    alert(tmpflips)
+                    #alert(tmpflips)
                     foundflips=[]
                     found_y=i
                     found_x=j
@@ -93,7 +116,19 @@ class Reversi
         
         
     init: () -> 
-        tbl=$('<table border="2" cellpadding="2" cellspacing="0"></table>')
+        ctrldiv=$('<div></div>')
+        btn_init=$('<button>Init</button>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        $('<span>X:</span>').appendTo(ctrldiv)
+        @spanX=$('<span></span>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        $('<span>O:</span>').appendTo(ctrldiv)
+        @spanO=$('<span></span>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        btn_init.click ()=>@initField()
+        
+        ctrldiv.appendTo($("#root"))
+        tbl=$('<table border="2" cellpadding="1" cellspacing="1" rules="all"></table>')
         tbl.appendTo($("#root"))
         @field_size = 8
         @field=([1..@field_size+1] for i in [1..@field_size+1])
@@ -108,12 +143,29 @@ class Reversi
                 
                 cell.click @clicker(i,j)
             tbl.append(row)
+        @initField()
+    
+    calc: () ->
+        scoreX=0
+        scoreO=0
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                scoreX++ if @field[i][j].state==1
+                scoreO++ if @field[i][j].state==2
+        @spanX.html(scoreX)
+        @spanO.html(scoreO)
+        
+    initField: () ->
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                @field[i][j].setState(0)
         n=@field_size/2
         @field[n][n].setState(1)
         @field[n+1][n+1].setState(1)
         @field[n+1][n+1].setState(1)
         @field[n][n+1].setState(2)
         @field[n+1][n].setState(2)
+        @calc()
 
 reversi= new Reversi
 window.g_reversi = reversi
