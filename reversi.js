@@ -1,52 +1,9 @@
 ﻿(function() {
-  var Cell, Reversi, ReversiBoard, reversi;
-
-  Cell = (function() {
-    function Cell(y, x, td) {
-      this.y = y;
-      this.x = x;
-      this.td = td;
-      this.state = 0;
-    }
-
-    Cell.prototype.getState = function() {
-      return this.state;
-    };
-
-    Cell.prototype.setState = function(state) {
-      this.state = state;
-      return this.display();
-    };
-
-    Cell.prototype.roll = function() {
-      switch (this.state) {
-        case 1:
-          this.state = 2;
-          break;
-        case 2:
-          this.state = 1;
-      }
-      return this.display();
-    };
-
-    Cell.prototype.display = function() {
-      switch (this.state) {
-        case 0:
-          return this.td.html(' ');
-        case 1:
-          return this.td.html('<b>X</b>');
-        case 2:
-          return this.td.html('<b>O</b>');
-      }
-    };
-
-    return Cell;
-
-  })();
+  var ExtAlg, Reversi2, ReversiBoard, SimpleAlg, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
-      var i, j, n, _i, _j, _ref, _ref1;
+      var i;
       this.field_size = fs;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
@@ -60,6 +17,15 @@
         }
         return _results;
       }).call(this);
+      this.init();
+    }
+
+    ReversiBoard.prototype.maxscore = function() {
+      return this.field_size * this.field_size + 20;
+    };
+
+    ReversiBoard.prototype.init = function() {
+      var i, j, n, _i, _j, _ref, _ref1;
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
           this.field[i][j] = 0;
@@ -69,24 +35,18 @@
       this.field[n][n] = 1;
       this.field[n + 1][n + 1] = 1;
       this.field[n][n + 1] = 2;
-      this.field[n + 1][n] = 2;
-    }
+      return this.field[n + 1][n] = 2;
+    };
 
     ReversiBoard.prototype.clone = function() {
-      var i, j, res, _i, _ref, _results;
+      var i, j, res, _i, _j, _ref, _ref1;
       res = new ReversiBoard(this.field_size);
-      _results = [];
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push((function() {
-          var _j, _ref1, _results1;
-          _results1 = [];
-          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            _results1.push(res.field[i][j] = this.field[i][j]);
-          }
-          return _results1;
-        }).call(this));
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          res.field[i][j] = this.field[i][j];
+        }
       }
-      return _results;
+      return res;
     };
 
     ReversiBoard.prototype.roll = function(y, x) {
@@ -165,15 +125,15 @@
     };
 
     ReversiBoard.prototype.score = function() {
-      var i, j, scoreX, scoreY, _i, _j, _ref, _ref1;
+      var i, j, scoreO, scoreX, _i, _j, _ref, _ref1;
       scoreX = 0;
-      scoreY = 0;
+      scoreO = 0;
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          if (this.field[i][j] = 1) {
+          if (this.field[i][j] === 1) {
             scoreX++;
           }
-          if (this.field[i][j] = 2) {
+          if (this.field[i][j] === 2) {
             scoreO++;
           }
         }
@@ -182,6 +142,29 @@
         sx: scoreX,
         so: scoreO
       };
+    };
+
+    ReversiBoard.prototype.score_side = function(s) {
+      var i, j, score, _i, _j, _ref, _ref1;
+      score = 0;
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          if (this.field[i][j] === s) {
+            score++;
+          }
+        }
+      }
+      return score;
+    };
+
+    ReversiBoard.prototype.delta_side = function(s) {
+      var opp;
+      if (s === 1) {
+        opp = 2;
+      } else {
+        opp = 1;
+      }
+      return this.score_side(s) - this.score_side(opp);
     };
 
     ReversiBoard.prototype.possibleMoves = function(side) {
@@ -209,84 +192,39 @@
       return moves;
     };
 
+    ReversiBoard.prototype.setState = function(i, j, p) {
+      return this.field[i][j] = p;
+    };
+
+    ReversiBoard.prototype.getState = function(i, j, p) {
+      return this.field[i][j];
+    };
+
     return ReversiBoard;
 
   })();
 
-  Reversi = (function() {
-    function Reversi() {}
+  SimpleAlg = (function() {
+    function SimpleAlg() {}
 
-    Reversi.prototype.roll = function(flips) {
-      var flip, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = flips.length; _i < _len; _i++) {
-        flip = flips[_i];
-        _results.push(this.field[flip[0]][flip[1]].roll());
-      }
-      return _results;
-    };
-
-    Reversi.prototype.onCellClick = function(i, j) {
-      var done, flips, myMove, r;
-      flips = this.getFlips(i, j, 1);
-      if (flips.length > 0) {
-        this.field[i][j].setState(1);
-        this.roll(flips);
-      } else {
-        r = this.findAnyMove(1);
-        if (r.flips.length > 0) {
-          alert("Ход неверен, есть возможность правильного хода");
-          return;
-        }
-      }
-      myMove = 1 === 1;
-      done = 1 === 0;
-      this.calc();
-      r = this.findAnyMove(2);
-      while (myMove && (!done)) {
-        if (r.flips.length > 0) {
-          this.field[r.y][r.x].setState(2);
-          this.roll(r.flips);
-        }
-        r = this.findAnyMove(1);
-        if (r.flips.length > 0) {
-          myMove = 1 === 0;
-        } else {
-          r = this.findAnyMove(2);
-          done = r.flips.length === 0;
-        }
-      }
-      this.calc();
-      if (done) {
-        alert("Game over!");
-      }
-    };
-
-    Reversi.prototype.clicker = function(i, j) {
-      return (function(_this) {
-        return function(event) {
-          return _this.onCellClick(i, j);
-        };
-      })(this);
-    };
-
-    Reversi.prototype.findAnyMove = function(side) {
-      var found_x, found_y, foundflips, i, j, result, t, tmpflips, _i, _j, _k, _len, _ref, _ref1;
+    SimpleAlg.prototype.findAnyMove = function(board, side) {
+      var found_x, found_y, foundflips, m, opp, pm, result, t, tmpflips, _i, _j, _len, _len1, _ref;
+      opp = side === 1 ? 2 : 1;
       tmpflips = [];
       foundflips = [];
       found_y = 0;
       found_x = 0;
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          tmpflips = this.getFlips(i, j, side);
-          if (tmpflips.length > foundflips.length) {
-            foundflips = [];
-            found_y = i;
-            found_x = j;
-            for (_k = 0, _len = tmpflips.length; _k < _len; _k++) {
-              t = tmpflips[_k];
-              foundflips.push(t);
-            }
+      pm = board.possibleMoves(side);
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        if (m.flips.length > foundflips.length) {
+          foundflips = [];
+          found_y = m.y;
+          found_x = m.x;
+          _ref = m.flips;
+          for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+            t = _ref[_j];
+            foundflips.push(t);
           }
         }
       }
@@ -298,51 +236,144 @@
       return result;
     };
 
-    Reversi.prototype.getFlips = function(y, x, p) {
-      var a2, dir, dirs, dx, dy, flips, i, j, nx, ny, t, temp, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
-      if (this.field[y][x].state !== 0) {
-        return [];
-      }
-      dirs = [];
-      a2 = function(x, y) {
-        return [x, y];
-      };
-      flips = [];
-      _ref = [-1, 0, 1];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        i = _ref[_i];
-        _ref1 = [-1, 0, 1];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          j = _ref1[_j];
-          if ((i !== 0) || (j !== 0)) {
-            dirs.push(a2(i, j));
+    return SimpleAlg;
+
+  })();
+
+  ExtAlg = (function() {
+    function ExtAlg() {}
+
+    ExtAlg.prototype.findAnyMove = function(board, side) {
+      var b, b2, d, m, m2, maxdelta, minrate, opp, pm, pm2, _i, _j, _k, _l, _len, _len1, _len2, _len3;
+      opp = side === 1 ? 2 : 1;
+      pm = board.possibleMoves(side);
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        b = board.clone();
+        b.apply(m.flips);
+        pm2 = b.possibleMoves(opp);
+        maxdelta = -board.maxscore();
+        for (_j = 0, _len1 = pm2.length; _j < _len1; _j++) {
+          m2 = pm2[_j];
+          b2 = b.clone();
+          b2.apply(m2);
+          d = b2.delta_side(opp);
+          if (d > maxdelta) {
+            maxdelta = d;
           }
         }
+        m.rate = maxdelta;
       }
-      for (_k = 0, _len2 = dirs.length; _k < _len2; _k++) {
-        dir = dirs[_k];
-        dy = dir[0];
-        dx = dir[1];
-        nx = x + dx;
-        ny = y + dy;
-        temp = [];
-        while ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx].state !== 0) && (this.field[ny][nx].state !== p)) {
-          temp.push(a2(ny, nx));
-          nx = nx + dx;
-          ny = ny + dy;
-        }
-        if ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx].state === p)) {
-          for (_l = 0, _len3 = temp.length; _l < _len3; _l++) {
-            t = temp[_l];
-            flips.push(a2(t[0], t[1]));
-          }
+      minrate = board.maxscore();
+      for (_k = 0, _len2 = pm.length; _k < _len2; _k++) {
+        m = pm[_k];
+        if (m.rate < minrate) {
+          minrate = m.rate;
         }
       }
-      return flips;
+      for (_l = 0, _len3 = pm.length; _l < _len3; _l++) {
+        m = pm[_l];
+        if (m.rate === minrate) {
+          return m;
+        }
+      }
     };
 
-    Reversi.prototype.init = function() {
-      var btn_init, cc, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
+    return ExtAlg;
+
+  })();
+
+  Reversi2 = (function() {
+    function Reversi2() {
+      this.alg = new ExtAlg();
+    }
+
+    Reversi2.prototype.clicker = function(i, j) {
+      return (function(_this) {
+        return function(event) {
+          return _this.onCellClick(i, j);
+        };
+      })(this);
+    };
+
+    Reversi2.prototype.onCellClick = function(i, j) {
+      var done, flips, myMove, r;
+      flips = this.rb.getFlips(i, j, 1);
+      if (flips.length > 0) {
+        this.rb.setState(i, j, 1);
+        this.rb.apply(flips);
+      } else {
+        r = this.rb.possibleMoves(1);
+        if (r.length > 0) {
+          alert("Ход неверен, есть возможность правильного хода");
+          return;
+        }
+      }
+      myMove = 1 === 1;
+      done = 1 === 0;
+      this.draw();
+      r = this.findAnyMove(2);
+      while (myMove && (!done)) {
+        if (r.flips.length > 0) {
+          this.rb.setState(r.y, r.x, 2);
+          this.rb.apply(r.flips);
+        }
+        r = this.findAnyMove(1);
+        if (r.flips.length > 0) {
+          myMove = 1 === 0;
+        } else {
+          r = this.findAnyMove(2);
+          done = r.flips.length === 0;
+        }
+      }
+      this.draw();
+      if (done) {
+        alert("Game over!");
+      }
+    };
+
+    Reversi2.prototype.findAnyMove = function(side) {
+      return this.alg.findAnyMove(this.rb, side);
+    };
+
+    Reversi2.prototype.calc = function() {
+      var s;
+      s = this.rb.score();
+      this.spanX.html(s.sx);
+      return this.spanO.html(s.so);
+    };
+
+    Reversi2.prototype.draw = function() {
+      var i, j, _i, _ref, _results;
+      this.calc();
+      _results = [];
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        _results.push((function() {
+          var _j, _ref1, _results1;
+          _results1 = [];
+          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+            switch (this.rb.getState(i, j)) {
+              case 0:
+                _results1.push(this.field[i][j].html(' '));
+                break;
+              case 1:
+                _results1.push(this.field[i][j].html('<b>X</b>'));
+                break;
+              case 2:
+                _results1.push(this.field[i][j].html('<b>O</b>'));
+                break;
+              default:
+                _results1.push(void 0);
+            }
+          }
+          return _results1;
+        }).call(this));
+      }
+      return _results;
+    };
+
+    Reversi2.prototype.init = function() {
+      var btn_init, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
       btn_init = $('<button>Init</button>').appendTo(ctrldiv);
       $('<p></p>').appendTo(ctrldiv);
@@ -360,7 +391,7 @@
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
-      this.field_size = 8;
+      this.field_size = 10;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];
@@ -373,14 +404,13 @@
         }
         return _results;
       }).call(this);
+      this.rb = new ReversiBoard(this.field_size);
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         row = $('<row></row>');
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
           cell = $('<td valign="middle" align="center" width=40 height=40></td>');
           cell.appendTo(row);
-          cc = new Cell(i, j, cell);
-          cc.setState(0);
-          this.field[i][j] = cc;
+          this.field[i][j] = cell;
           cell.click(this.clicker(i, j));
         }
         tbl.append(row);
@@ -388,45 +418,16 @@
       return this.initField();
     };
 
-    Reversi.prototype.calc = function() {
-      var i, j, scoreO, scoreX, _i, _j, _ref, _ref1;
-      scoreX = 0;
-      scoreO = 0;
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          if (this.field[i][j].state === 1) {
-            scoreX++;
-          }
-          if (this.field[i][j].state === 2) {
-            scoreO++;
-          }
-        }
-      }
-      this.spanX.html(scoreX);
-      return this.spanO.html(scoreO);
+    Reversi2.prototype.initField = function() {
+      this.rb.init();
+      return this.draw();
     };
 
-    Reversi.prototype.initField = function() {
-      var i, j, n, _i, _j, _ref, _ref1;
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          this.field[i][j].setState(0);
-        }
-      }
-      n = this.field_size / 2;
-      this.field[n][n].setState(1);
-      this.field[n + 1][n + 1].setState(1);
-      this.field[n + 1][n + 1].setState(1);
-      this.field[n][n + 1].setState(2);
-      this.field[n + 1][n].setState(2);
-      return this.calc();
-    };
-
-    return Reversi;
+    return Reversi2;
 
   })();
 
-  reversi = new Reversi;
+  reversi = new Reversi2;
 
   window.g_reversi = reversi;
 

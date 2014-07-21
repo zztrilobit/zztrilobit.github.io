@@ -1,28 +1,16 @@
-class Cell
-    constructor: (@y, @x, @td) ->
-        @state=0
-    getState: -> return @state
-    setState: (state) -> 
-        @state=state
-        @display()
-    roll: () ->
-        switch @state
-            when 1 then @state=2
-            when 2 then @state=1
-        @display()
-    display: () ->
-        switch @state
-            when 0 then @td.html(' ')
-            when 1 then @td.html('<b>X</b>')
-            when 2 then @td.html('<b>O</b>')
 
 class ReversiBoard
     constructor: (fs)->
         @field_size = fs
         @field=([1..@field_size+1] for i in [1..@field_size+1])
+        @init()
+    
+    maxscore:() -> return @field_size*@field_size+20
+    
+    init:() ->
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                @field[i][j]=0
+                  @field[i][j]=0
                 
         n=@field_size/2
         @field[n][n]=1
@@ -35,6 +23,7 @@ class ReversiBoard
         for i in [1..@field_size] 
             for j in [1..@field_size]
                 res.field[i][j]=@field[i][j]
+        return res
         
     roll: (y,x) ->
         switch @field[y][x]
@@ -82,13 +71,28 @@ class ReversiBoard
 
     score: () ->
         scoreX=0
-        scoreY=0
+        scoreO=0
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                scoreX++ if @field[i][j]=1
-                scoreO++ if @field[i][j]=2
+                scoreX++ if @field[i][j]==1
+                scoreO++ if @field[i][j]==2
         return (sx:scoreX,so:scoreO)
+    
+    score_side: (s) ->
+        score=0
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                score++ if @field[i][j]==s
         
+        return score
+
+    delta_side: (s) ->
+        if s==1 
+            opp=2
+        else
+            opp=1
+        return @score_side(s)-@score_side(opp)
+    
     possibleMoves: (side) ->
         tmpflips=[]
         foundflips=[]
@@ -106,32 +110,85 @@ class ReversiBoard
         
         return moves
         
+    setState: (i,j,p)->@field[i][j]=p
+    getState: (i,j,p)->return @field[i][j]
 
-########################################################			
-class Reversi
-    constructor: () ->
-    roll: (flips) ->
-        for flip in flips
-            @field[flip[0]][flip[1]].roll()
+
+    
+#==========================================================================
+class SimpleAlg
+    findAnyMove: (board,side) ->
+        opp= if side==1 then 2 else 1
+        tmpflips=[]
+        foundflips=[]
+        found_y=0
+        found_x=0
+        pm=board.possibleMoves(side)
+        
+        for m in pm
+            if m.flips.length>foundflips.length
+                foundflips=[]
+                found_y=m.y
+                found_x=m.x
+                for t in m.flips 
+                    foundflips.push(t)
+               
+        result=
+            x:found_x
+            y:found_y
+            flips:foundflips
+        return result
+#==========================================================================
+class ExtAlg
+    findAnyMove: (board,side) ->
+        opp= if side==1 then 2 else 1
+        pm=board.possibleMoves(side)
+        for m in pm
+            b = board.clone()
+            b.apply(m.flips)
+            pm2=b.possibleMoves(opp)
+            maxdelta=- board.maxscore()
+            for m2 in pm2
+                b2=b.clone()
+                b2.apply(m2)
+                d=b2.delta_side(opp)
+                if d>maxdelta then maxdelta=d
+            m.rate=maxdelta
+            
+        minrate=board.maxscore()
+        for m in pm
+            if m.rate<minrate then minrate=m.rate
+
+        for m in pm
+            if m.rate==minrate 
+                return m
+    
+#==========================================================================
+class Reversi2
+    constructor:()->
+        @alg=new ExtAlg()
+        
+    clicker: (i,j) -> return (event) => @onCellClick(i,j)
+
     
     onCellClick: (i,j) ->
-        flips = @getFlips(i,j,1)
+        flips = @rb.getFlips(i,j,1)
         if flips.length>0
-            @field[i][j].setState(1)
-            @roll(flips)
+            @rb.setState(i,j,1)
+            @rb.apply(flips)
         else 
-            r=@findAnyMove(1)
-            if r.flips.length>0 
+            r=@rb.possibleMoves(1)
+            if r.length>0 
                 alert "Ход неверен, есть возможность правильного хода"
                 return
         myMove=(1==1)
         done=(1==0)
-        @calc()
+        @draw()
         r=@findAnyMove(2)
         while myMove and (not done) 
             if r.flips.length>0
-                @field[r.y][r.x].setState(2)
-                @roll(r.flips)
+                @rb.setState(r.y,r.x,2)
+                @rb.apply(r.flips)
                 
             r=@findAnyMove(1)
             if r.flips.length>0
@@ -139,65 +196,27 @@ class Reversi
             else
                 r=@findAnyMove(2)
                 done=(r.flips.length == 0)
-        @calc()
+        @draw()
         alert("Game over!") if done
         
         return
-        
-    clicker: (i,j) -> return (event) => @onCellClick(i,j)
-    
+
     findAnyMove: (side) ->
-        tmpflips=[]
-        foundflips=[]
-        found_y=0
-        found_x=0
+        return @alg.findAnyMove(@rb,side)
+
+    calc: () ->
+        s=@rb.score()
+        @spanX.html(s.sx)
+        @spanO.html(s.so)
+
+    draw: () ->
+        @calc()
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                tmpflips=@getFlips(i,j,side)
-                if tmpflips.length>foundflips.length
-                    #alert(tmpflips)
-                    foundflips=[]
-                    found_y=i
-                    found_x=j
-                    for t in tmpflips 
-                        foundflips.push(t)
-        result=
-            x:found_x
-            y:found_y
-            flips:foundflips
-        return result
-    
-    getFlips: (y,x,p) ->
-        if @field[y][x].state!=0 
-            return []
-        
-        dirs=[]
-        a2= (x,y) -> return [x,y]
-        flips=[]
-        
-        for i in [-1,0,1]
-            for j in [-1,0,1]
-                if (i!=0) || (j!=0) then dirs.push a2(i,j)
-        
-        #цикл по направлениям
-        for dir in dirs
-            dy=dir[0]
-            dx=dir[1]
-            nx=x+dx
-            ny=y+dy
-            
-            #идем по направлению по своим фишкам
-            temp=[]
-            while (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx].state!=0) and (@field[ny][nx].state!=p)
-                temp.push a2(ny,nx)
-                nx=nx+dx
-                ny=ny+dy
-                
-            #и если уперлись в чужую ссыплем в ответ    
-            if (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx].state==p)
-                for t in temp 
-                    flips.push(a2(t[0],t[1]))
-        return  flips
+                switch @rb.getState(i,j)
+                    when 0 then @field[i][j].html(' ')
+                    when 1 then @field[i][j].html('<b>X</b>')
+                    when 2 then @field[i][j].html('<b>O</b>')
         
         
     init: () -> 
@@ -215,44 +234,25 @@ class Reversi
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
         tbl.appendTo($("#root"))
-        @field_size = 8
+        @field_size = 10
         @field=([1..@field_size+1] for i in [1..@field_size+1])
+        @rb=new ReversiBoard(@field_size)
         for i in [1..@field_size] 
             row=$('<row></row>')
             for j in [1..@field_size]
                 cell=$('<td valign="middle" align="center" width=40 height=40></td>')
                 cell.appendTo(row)
-                cc = new Cell(i,j,cell)
-                cc.setState(0)				
-                @field[i][j]=cc
+                @field[i][j]=cell
                 
                 cell.click @clicker(i,j)
             tbl.append(row)
         @initField()
-    
-    calc: () ->
-        scoreX=0
-        scoreO=0
-        for i in [1..@field_size] 
-            for j in [1..@field_size]
-                scoreX++ if @field[i][j].state==1
-                scoreO++ if @field[i][j].state==2
-        @spanX.html(scoreX)
-        @spanO.html(scoreO)
         
-    initField: () ->
-        for i in [1..@field_size] 
-            for j in [1..@field_size]
-                @field[i][j].setState(0)
-        n=@field_size/2
-        @field[n][n].setState(1)
-        @field[n+1][n+1].setState(1)
-        @field[n+1][n+1].setState(1)
-        @field[n][n+1].setState(2)
-        @field[n+1][n].setState(2)
-        @calc()
+    initField:()->
+        @rb.init()
+        @draw()
 
-reversi= new Reversi
+reversi= new Reversi2
 window.g_reversi = reversi
 
 $(document).ready () -> reversi.init()
