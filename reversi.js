@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
+  var ConservAlg, ContrAlg, MonteAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -352,10 +352,77 @@
 
   })();
 
+  MonteAlg = (function() {
+    function MonteAlg() {}
+
+    MonteAlg.prototype.bestMoves = function(board, side) {
+      var b, b2, cost, gameOver, i, m, maxrate, n, opp, pm, rate, rm, rpm, tmp, _i, _j, _k, _l, _len, _len1, _len2;
+      opp = side === 1 ? 2 : 1;
+      pm = board.possibleMoves(side);
+      b = new ReversiBoard(board.field_size);
+      b2 = new ReversiBoard(board.field_size);
+      cost = 1;
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        board.fill(b);
+        b.apply(m.flips);
+        rate = 0;
+        for (i = _j = 1; _j <= 1000; i = ++_j) {
+          gameOver = 1 === 0;
+          n = 0;
+          while ((!gameOver) && (n < (board.field_size * board.field_size + 10))) {
+            gameOver = 1 === 1;
+            n++;
+            rpm = b.possibleMoves(opp);
+            if (rpm.length > 0) {
+              gameOver = 1 === 0;
+              rm = getRandomA(rpm);
+              b.setState(rm.y, rm.x, opp);
+              b.apply(rm.flips);
+            }
+            rpm = b.possibleMoves(side);
+            if (rpm.length > 0) {
+              gameOver = 1 === 0;
+              rm = getRandomA(rpm);
+              b.setState(rm.y, rm.x, side);
+              b.apply(rm.flips);
+            }
+          }
+          if (b.score_side(side) >= b.score_side(opp)) {
+            rate++;
+          }
+        }
+        m.rate = rate;
+      }
+      maxrate = 0;
+      for (_k = 0, _len1 = pm.length; _k < _len1; _k++) {
+        m = pm[_k];
+        if (m.rate > maxrate) {
+          maxrate = m.rate;
+        }
+      }
+      tmp = [];
+      for (_l = 0, _len2 = pm.length; _l < _len2; _l++) {
+        m = pm[_l];
+        if (m.rate === maxrate) {
+          tmp.push(m);
+        }
+      }
+      return tmp;
+    };
+
+    MonteAlg.prototype.findAnyMove = function(board, side) {
+      return getRandomA(this.bestMoves(board, side));
+    };
+
+    return MonteAlg;
+
+  })();
+
   Reversi2 = (function() {
     function Reversi2() {
       this.calg = new ConservAlg();
-      this.alg = new ContrAlg(this.calg);
+      this.alg = new MonteAlg(this.calg);
     }
 
     Reversi2.prototype.clicker = function(i, j) {

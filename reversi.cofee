@@ -112,7 +112,7 @@ class ReversiBoard
                     moves.push((y:found_y, x:found_x, flips:tmpflips))
         
         return moves
-        
+    
     setState: (i,j,p)->@field[i][j]=p
     getState: (i,j,p)->return @field[i][j]
 
@@ -210,12 +210,56 @@ class ContrAlg
     findAnyMove: (board,side) ->
         return getRandomA(@bestMoves(board,side))
 
+class MonteAlg 
+    bestMoves: (board,side) ->
+        opp= if side==1 then 2 else 1
+        pm=board.possibleMoves(side)
+        b = new ReversiBoard(board.field_size)
+        b2 = new ReversiBoard(board.field_size)
+        cost=1
+        for m in pm
+            board.fill(b)
+            b.apply(m.flips)
+            rate=0
+            for i in [1..1000]
+                gameOver=(1==0)
+                n=0
+                while ( not gameOver ) and ( n < ( board.field_size * board.field_size + 10 ) )
+                    gameOver=(1==1) 
+                    n++
+                    rpm=b.possibleMoves(opp)
+                    if rpm.length>0
+                        gameOver=(1==0)
+                        rm=getRandomA(rpm)
+                        b.setState(rm.y,rm.x,opp)
+                        b.apply(rm.flips)
+                    rpm=b.possibleMoves(side)
+                    if rpm.length>0
+                        gameOver=(1==0)
+                        rm=getRandomA(rpm)
+                        b.setState(rm.y,rm.x,side)
+                        b.apply(rm.flips)
+                rate++ if b.score_side(side)>=b.score_side(opp)
+            m.rate=rate;
+        maxrate=0
+        for m in pm
+            if m.rate>maxrate
+                maxrate=m.rate 
+        tmp=[]
+        for m in pm
+            if m.rate==maxrate
+                tmp.push(m)
+        return tmp
+        
+    findAnyMove: (board,side) ->
+        return getRandomA(@bestMoves(board,side))
     
 #==========================================================================
 class Reversi2
     constructor:()->
         @calg=new ConservAlg()
-        @alg=new ContrAlg(@calg)
+#        @alg=new ContrAlg(@calg)
+        @alg=new MonteAlg(@calg)
         
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
 
