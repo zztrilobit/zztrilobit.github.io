@@ -314,7 +314,19 @@ class Reversi2
         
     init: () -> 
         ctrldiv=$('<div></div>')
-        btn_init=$('<button>Init</button>').appendTo(ctrldiv)
+        
+        btn_init=$('<button>Greedy</button>').appendTo(ctrldiv)
+        btn_init.click ()=>@initFieldGreegy()
+        
+        btn_init=$('<button>Conserv</button>').appendTo(ctrldiv)
+        btn_init.click ()=>@initFieldConserv()
+
+        btn_init=$('<button>Cons++++</button>').appendTo(ctrldiv)
+        btn_init.click ()=>@initFieldConserv2()
+        
+        btn_init=$('<button>Monte</button>').appendTo(ctrldiv)
+        btn_init.click ()=>@initFieldMonte()
+        
         $('<p></p>').appendTo(ctrldiv)
         $('<span>X:</span>').appendTo(ctrldiv)
         @spanX=$('<span></span>').appendTo(ctrldiv)
@@ -322,7 +334,6 @@ class Reversi2
         $('<span>O:</span>').appendTo(ctrldiv)
         @spanO=$('<span></span>').appendTo(ctrldiv)
         $('<p></p>').appendTo(ctrldiv)
-        btn_init.click ()=>@initField()
         
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
@@ -341,6 +352,24 @@ class Reversi2
             tbl.append(row)
         @initField()
         
+    initFieldGreedy:()->
+        @alg=new SimpleAlg()
+        @initField()
+        
+    initFieldConserv:()->
+        @alg=new ConservAlg()
+        @initField()
+        
+    initFieldConserv2:()->
+        @calg=new ConservAlg()
+        @alg=new MonteAlg(@calg)
+        @initField()
+        
+    initFieldMonte:()->
+        @alg=new MonteAlg()
+        @initField()
+    
+
     initField:()->
         @rb.init()
         @draw()

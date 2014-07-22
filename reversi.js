@@ -512,7 +512,30 @@
     Reversi2.prototype.init = function() {
       var btn_init, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
-      btn_init = $('<button>Init</button>').appendTo(ctrldiv);
+      btn_init = $('<button>Greedy</button>').appendTo(ctrldiv);
+      btn_init.click((function(_this) {
+        return function() {
+          return _this.initFieldGreegy();
+        };
+      })(this));
+      btn_init = $('<button>Conserv</button>').appendTo(ctrldiv);
+      btn_init.click((function(_this) {
+        return function() {
+          return _this.initFieldConserv();
+        };
+      })(this));
+      btn_init = $('<button>Cons++++</button>').appendTo(ctrldiv);
+      btn_init.click((function(_this) {
+        return function() {
+          return _this.initFieldConserv2();
+        };
+      })(this));
+      btn_init = $('<button>Monte</button>').appendTo(ctrldiv);
+      btn_init.click((function(_this) {
+        return function() {
+          return _this.initFieldMonte();
+        };
+      })(this));
       $('<p></p>').appendTo(ctrldiv);
       $('<span>X:</span>').appendTo(ctrldiv);
       this.spanX = $('<span></span>').appendTo(ctrldiv);
@@ -520,11 +543,6 @@
       $('<span>O:</span>').appendTo(ctrldiv);
       this.spanO = $('<span></span>').appendTo(ctrldiv);
       $('<p></p>').appendTo(ctrldiv);
-      btn_init.click((function(_this) {
-        return function() {
-          return _this.initField();
-        };
-      })(this));
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
@@ -552,6 +570,27 @@
         }
         tbl.append(row);
       }
+      return this.initField();
+    };
+
+    Reversi2.prototype.initFieldGreedy = function() {
+      this.alg = new SimpleAlg();
+      return this.initField();
+    };
+
+    Reversi2.prototype.initFieldConserv = function() {
+      this.alg = new ConservAlg();
+      return this.initField();
+    };
+
+    Reversi2.prototype.initFieldConserv2 = function() {
+      this.calg = new ConservAlg();
+      this.alg = new MonteAlg(this.calg);
+      return this.initField();
+    };
+
+    Reversi2.prototype.initFieldMonte = function() {
+      this.alg = new MonteAlg();
       return this.initField();
     };
 
