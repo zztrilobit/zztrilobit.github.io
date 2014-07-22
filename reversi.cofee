@@ -287,7 +287,7 @@ class Reversi2
         @field=([1..@field_size+1] for i in [1..@field_size+1])
         @rb=new ReversiBoard(@field_size)
         for i in [1..@field_size] 
-            row=$('<row></row>')
+            row=$('<tr></tr>')
             for j in [1..@field_size]
                 cell=$('<td valign="middle" align="center" width=40 height=40></td>')
                 cell.appendTo(row)

@@ -476,7 +476,7 @@
       }).call(this);
       this.rb = new ReversiBoard(this.field_size);
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        row = $('<row></row>');
+        row = $('<tr></tr>');
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
           cell = $('<td valign="middle" align="center" width=40 height=40></td>');
           cell.appendTo(row);
