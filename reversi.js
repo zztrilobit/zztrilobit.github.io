@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ExtAlg, Reversi2, ReversiBoard, SimpleAlg, reversi;
+  var ConservAlg, ContrAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -39,14 +39,26 @@
     };
 
     ReversiBoard.prototype.clone = function() {
-      var i, j, res, _i, _j, _ref, _ref1;
+      var res;
       res = new ReversiBoard(this.field_size);
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          res.field[i][j] = this.field[i][j];
-        }
-      }
+      this.fill(res);
       return res;
+    };
+
+    ReversiBoard.prototype.fill = function(dest) {
+      var i, j, _i, _ref, _results;
+      _results = [];
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        _results.push((function() {
+          var _j, _ref1, _results1;
+          _results1 = [];
+          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+            _results1.push(dest.field[i][j] = this.field[i][j]);
+          }
+          return _results1;
+        }).call(this));
+      }
+      return _results;
     };
 
     ReversiBoard.prototype.roll = function(y, x) {
@@ -240,52 +252,110 @@
 
   })();
 
-  ExtAlg = (function() {
-    function ExtAlg() {}
+  getRandomInt = function(mn, mx) {
+    return Math.floor(Math.random() * (mx - mn + 1)) + mn;
+  };
 
-    ExtAlg.prototype.findAnyMove = function(board, side) {
-      var b, b2, d, m, m2, maxdelta, minrate, opp, pm, pm2, _i, _j, _k, _l, _len, _len1, _len2, _len3;
+  getRandomA = function(a) {
+    return a[getRandomInt(0, a.length - 1)];
+  };
+
+  ConservAlg = (function() {
+    function ConservAlg() {}
+
+    ConservAlg.prototype.bestMoves = function(board, side) {
+      var b, b2, cost, m, m2, maxopp, maxrate, opp, pm, pm2, tmp, _i, _j, _k, _l, _len, _len1, _len2, _len3;
       opp = side === 1 ? 2 : 1;
       pm = board.possibleMoves(side);
+      b = new ReversiBoard(board.field_size);
+      b2 = new ReversiBoard(board.field_size);
+      cost = 1;
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
-        b = board.clone();
+        board.fill(b);
         b.apply(m.flips);
         pm2 = b.possibleMoves(opp);
-        maxdelta = -board.maxscore();
+        maxopp = 0;
         for (_j = 0, _len1 = pm2.length; _j < _len1; _j++) {
           m2 = pm2[_j];
-          b2 = b.clone();
-          b2.apply(m2);
-          d = b2.delta_side(opp);
-          if (d > maxdelta) {
-            maxdelta = d;
+          if (maxopp < m2.flips.length) {
+            maxopp = m2.flips.length;
           }
         }
-        m.rate = maxdelta;
+        m.rate = m.flips.length - maxopp;
       }
-      minrate = board.maxscore();
+      maxrate = -board.maxscore();
       for (_k = 0, _len2 = pm.length; _k < _len2; _k++) {
         m = pm[_k];
-        if (m.rate < minrate) {
-          minrate = m.rate;
+        if (m.rate > maxrate) {
+          maxrate = m.rate;
         }
       }
+      tmp = [];
       for (_l = 0, _len3 = pm.length; _l < _len3; _l++) {
         m = pm[_l];
-        if (m.rate === minrate) {
-          return m;
+        if (m.rate === maxrate) {
+          tmp.push(m);
         }
       }
+      return tmp;
     };
 
-    return ExtAlg;
+    ConservAlg.prototype.findAnyMove = function(board, side) {
+      return getRandomA(this.bestMoves(board, side));
+    };
+
+    return ConservAlg;
+
+  })();
+
+  ContrAlg = (function() {
+    function ContrAlg(pa) {
+      this.preAlg = pa;
+    }
+
+    ContrAlg.prototype.bestMoves = function(board, side) {
+      var a, b, cost, m, maxrate, opp, pm, tmp, _i, _j, _k, _len, _len1, _len2;
+      opp = side === 1 ? 2 : 1;
+      pm = board.possibleMoves(side);
+      b = new ReversiBoard(board.field_size);
+      cost = 1;
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        board.fill(b);
+        b.apply(m.flips);
+        a = this.preAlg.findAnyMove(board, opp);
+        m.rate = m.flips.length - a.rate;
+      }
+      maxrate = -board.maxscore();
+      for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
+        m = pm[_j];
+        if (m.rate > maxrate) {
+          maxrate = m.rate;
+        }
+      }
+      tmp = [];
+      for (_k = 0, _len2 = pm.length; _k < _len2; _k++) {
+        m = pm[_k];
+        if (m.rate === maxrate) {
+          tmp.push(m);
+        }
+      }
+      return tmp;
+    };
+
+    ContrAlg.prototype.findAnyMove = function(board, side) {
+      return getRandomA(this.bestMoves(board, side));
+    };
+
+    return ContrAlg;
 
   })();
 
   Reversi2 = (function() {
     function Reversi2() {
-      this.alg = new ExtAlg();
+      this.calg = new ConservAlg();
+      this.alg = new ContrAlg(this.calg);
     }
 
     Reversi2.prototype.clicker = function(i, j) {
@@ -391,7 +461,7 @@
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
-      this.field_size = 10;
+      this.field_size = 8;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];

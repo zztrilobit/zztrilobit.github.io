@@ -20,10 +20,13 @@ class ReversiBoard
         
     clone:() ->
         res= new ReversiBoard(@field_size)
+        @fill res
+        return res
+        
+    fill: (dest) ->
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                res.field[i][j]=@field[i][j]
-        return res
+                dest.field[i][j]=@field[i][j]
         
     roll: (y,x) ->
         switch @field[y][x]
@@ -116,6 +119,7 @@ class ReversiBoard
 
     
 #==========================================================================
+# тупо жадный алгоритм - переверни побольше
 class SimpleAlg
     findAnyMove: (board,side) ->
         opp= if side==1 then 2 else 1
@@ -138,35 +142,80 @@ class SimpleAlg
             y:found_y
             flips:foundflips
         return result
+
+
+getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
+getRandomA= (a)->return a[getRandomInt(0,a.length-1)]         
+        
 #==========================================================================
-class ExtAlg
-    findAnyMove: (board,side) ->
+# осторожный алгоритм - не дает после себя съесть много
+class ConservAlg
+    bestMoves: (board,side) ->
         opp= if side==1 then 2 else 1
         pm=board.possibleMoves(side)
+        b = new ReversiBoard(board.field_size)
+        b2 = new ReversiBoard(board.field_size)
+        cost=1
         for m in pm
-            b = board.clone()
+            board.fill(b)
             b.apply(m.flips)
+            #возможные ответы оппонента на мой ход
             pm2=b.possibleMoves(opp)
-            maxdelta=- board.maxscore()
+            maxopp=0
+            #ищем сколько он может максимально перевернуть
             for m2 in pm2
-                b2=b.clone()
-                b2.apply(m2)
-                d=b2.delta_side(opp)
-                if d>maxdelta then maxdelta=d
-            m.rate=maxdelta
+                maxopp=m2.flips.length if maxopp<m2.flips.length
+            # рейтинг хода мои перевороты - макс его 
+            m.rate=m.flips.length-maxopp
             
-        minrate=board.maxscore()
+        maxrate=-board.maxscore()
         for m in pm
-            if m.rate<minrate then minrate=m.rate
+            if m.rate>maxrate
+                maxrate=m.rate 
+        tmp=[]
+        for m in pm
+            if m.rate==maxrate
+                tmp.push(m)
+        return tmp
 
+    findAnyMove: (board,side) ->
+        return getRandomA(@bestMoves(board,side))
+        
+class ContrAlg
+    constructor:(pa)->
+        @preAlg=pa
+        
+    bestMoves: (board,side) ->
+        opp= if side==1 then 2 else 1
+        pm=board.possibleMoves(side)
+        b = new ReversiBoard(board.field_size)
+        #b2 = new ReversiBoard(board.field_size)
+        cost=1
         for m in pm
-            if m.rate==minrate 
-                return m
+            board.fill(b)
+            b.apply(m.flips)
+            a=@preAlg.findAnyMove(board,opp)
+            m.rate=m.flips.length-a.rate
+            
+        maxrate=-board.maxscore()
+        for m in pm
+            if m.rate>maxrate
+                maxrate=m.rate 
+        tmp=[]
+        for m in pm
+            if m.rate==maxrate
+                tmp.push(m)
+        return tmp
+        
+    findAnyMove: (board,side) ->
+        return getRandomA(@bestMoves(board,side))
+
     
 #==========================================================================
 class Reversi2
     constructor:()->
-        @alg=new ExtAlg()
+        @calg=new ConservAlg()
+        @alg=new ContrAlg(@calg)
         
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
 
@@ -234,7 +283,7 @@ class Reversi2
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
         tbl.appendTo($("#root"))
-        @field_size = 10
+        @field_size = 8
         @field=([1..@field_size+1] for i in [1..@field_size+1])
         @rb=new ReversiBoard(@field_size)
         for i in [1..@field_size] 
