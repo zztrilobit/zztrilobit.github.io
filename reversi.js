@@ -503,6 +503,7 @@
     function Reversi2() {
       this.calg = new ConservAlg();
       this.alg = new ContrAlg(this.calg);
+      this.undo_data = [];
     }
 
     Reversi2.prototype.clicker = function(i, j) {
@@ -515,6 +516,7 @@
 
     Reversi2.prototype.onCellClick = function(i, j) {
       var done, flips, myMove, r;
+      this.undo_data.push(this.rb.clone());
       flips = this.rb.getFlips(i, j, 1);
       if (flips.length > 0) {
         this.rb.setState(i, j, 1);
@@ -560,6 +562,15 @@
       return this.spanO.html(s.so);
     };
 
+    Reversi2.prototype.doUndo = function() {
+      var uu;
+      if (this.undo_data.length > 0) {
+        uu = this.undo_data.pop();
+        uu.fill(this.rb);
+        return this.draw();
+      }
+    };
+
     Reversi2.prototype.draw = function() {
       var i, j, _i, _ref, _results;
       this.calc();
@@ -590,7 +601,7 @@
     };
 
     Reversi2.prototype.init = function() {
-      var btn_cons, btn_cons2, btn_greedy, btn_monte, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
+      var btn_cons, btn_cons2, btn_greedy, btn_monte, btn_undo, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
       btn_cons = $('<p>Компьютер ирает:</p>').appendTo(ctrldiv);
       btn_greedy = $('<button>Жадно</button>').appendTo(ctrldiv);
@@ -624,6 +635,12 @@
       $('<span>O:</span>').appendTo(ctrldiv);
       this.spanO = $('<span></span>').appendTo(ctrldiv);
       $('<p></p>').appendTo(ctrldiv);
+      btn_undo = $('<button>Отмена</button>').appendTo(ctrldiv);
+      btn_undo.click((function(_this) {
+        return function() {
+          return _this.doUndo();
+        };
+      })(this));
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
@@ -677,7 +694,8 @@
 
     Reversi2.prototype.initField = function() {
       this.rb.init();
-      return this.draw();
+      this.draw();
+      return this.undo_data = [];
     };
 
     return Reversi2;

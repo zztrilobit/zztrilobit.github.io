@@ -306,6 +306,7 @@ class Reversi2
     constructor:()->
         @calg=new ConservAlg()
         @alg=new ContrAlg(@calg)
+        @undo_data=[]
         #@alg=new MonteAlg(@calg)
         #@alg=new ConservAlg()
         
@@ -313,6 +314,7 @@ class Reversi2
 
     
     onCellClick: (i,j) ->
+        @undo_data.push(@rb.clone())
         flips = @rb.getFlips(i,j,1)
         if flips.length>0
             @rb.setState(i,j,1)
@@ -350,6 +352,12 @@ class Reversi2
         @spanX.html(s.sx)
         @spanO.html(s.so)
 
+    doUndo: () ->
+        if @undo_data.length>0
+            uu=@undo_data.pop()
+            uu.fill(@rb)
+            @draw()
+            
     draw: () ->
         @calc()
         for i in [1..@field_size] 
@@ -383,6 +391,8 @@ class Reversi2
         $('<span>O:</span>').appendTo(ctrldiv)
         @spanO=$('<span></span>').appendTo(ctrldiv)
         $('<p></p>').appendTo(ctrldiv)
+        btn_undo=$('<button>Отмена</button>').appendTo(ctrldiv)
+        btn_undo.click ()=> @doUndo()
         
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
@@ -422,7 +432,8 @@ class Reversi2
     initField:()->
         @rb.init()
         @draw()
-
+        @undo_data=[]
+        
 reversi= new Reversi2
 window.g_reversi = reversi
 
