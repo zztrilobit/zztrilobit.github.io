@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, MonteAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
+  var ConservAlg, ContrAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -179,6 +179,19 @@
       return this.score_side(s) - this.score_side(opp);
     };
 
+    ReversiBoard.prototype.gameOver = function() {
+      var pm, res;
+      res = 1 === 1;
+      pm = this.possibleMoves(1);
+      if (pm.length > 0) {
+        res = 1 === 0;
+      }
+      pm = this.possibleMoves(2);
+      if (pm.length > 0) {
+        return res = 1 === 0;
+      }
+    };
+
     ReversiBoard.prototype.possibleMoves = function(side) {
       var found_x, found_y, foundflips, i, j, moves, tmpflips, _i, _j, _ref, _ref1;
       tmpflips = [];
@@ -204,6 +217,22 @@
       return moves;
     };
 
+    ReversiBoard.prototype.isCorner = function(j, i) {
+      return (j === 1 || j === this.field_size) && (i === 1 || i === this.field_size);
+    };
+
+    ReversiBoard.prototype.isPreCorner = function(j, i) {
+      var res;
+      res = 1 === 2;
+      if ((j === 2 || j === this.field_size - 1) && (i === 1 || i === 2 || i === this.field_size || i === this.field_size - 1)) {
+        res = 1 === 1;
+      }
+      if ((i === 2 || i === this.field_size - 1) && (j === 1 || j === 2 || j === this.field_size || j === this.field_size - 1)) {
+        res = 1 === 1;
+      }
+      return res;
+    };
+
     ReversiBoard.prototype.setState = function(i, j, p) {
       return this.field[i][j] = p;
     };
@@ -212,40 +241,68 @@
       return this.field[i][j];
     };
 
+    ReversiBoard.prototype.opp = function(side) {
+      if (side === 1) {
+        return 2;
+      } else {
+        return 1;
+      }
+    };
+
     return ReversiBoard;
+
+  })();
+
+  RandomAlg = (function() {
+    function RandomAlg() {}
+
+    RandomAlg.prototype.findAnyMove = function(board, side) {
+      var pm;
+      pm = board.possibleMoves(side);
+      return getRandomA(pm);
+    };
+
+    return RandomAlg;
 
   })();
 
   SimpleAlg = (function() {
     function SimpleAlg() {}
 
+    SimpleAlg.prototype.moveRate = function(m) {
+      var res;
+      res = m.flips.length;
+      if (this.board.isCorner(m.y, m.x)) {
+        res = res + 10;
+      }
+      if (this.board.isPreCorner(m.y, m.x)) {
+        res = res - 10;
+      }
+      return res;
+    };
+
     SimpleAlg.prototype.findAnyMove = function(board, side) {
-      var found_x, found_y, foundflips, m, opp, pm, result, t, tmpflips, _i, _j, _len, _len1, _ref;
-      opp = side === 1 ? 2 : 1;
-      tmpflips = [];
-      foundflips = [];
-      found_y = 0;
-      found_x = 0;
+      var m, maxrate, opp, pm, r, res, tmp, _i, _len;
+      this.board = board;
+      opp = board.opp(side);
       pm = board.possibleMoves(side);
+      maxrate = (-board.maxscore()) * 2;
+      tmp = [];
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
-        if (m.flips.length > foundflips.length) {
-          foundflips = [];
-          found_y = m.y;
-          found_x = m.x;
-          _ref = m.flips;
-          for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-            t = _ref[_j];
-            foundflips.push(t);
-          }
+        r = this.moveRate(m);
+        if (r = maxrate) {
+          tmp.push(m);
+        }
+        if (r > maxrate) {
+          tmp = [];
+          tmp.push(m);
+          maxrate = r;
+          res = m;
+          res.rate = r;
         }
       }
-      result = {
-        x: found_x,
-        y: found_y,
-        flips: foundflips
-      };
-      return result;
+      return getRandomA(tmp);
     };
 
     return SimpleAlg;
@@ -263,8 +320,21 @@
   ConservAlg = (function() {
     function ConservAlg() {}
 
+    ConservAlg.prototype.moveRate = function(m) {
+      var res;
+      res = m.flips.length;
+      if (this.board.isPreCorner(m.y, m.x)) {
+        res = res - 15;
+      }
+      if (this.board.isCorner(m.y, m.x)) {
+        res = res + 10;
+      }
+      return res;
+    };
+
     ConservAlg.prototype.bestMoves = function(board, side) {
-      var b, b2, cost, m, m2, maxopp, maxrate, opp, pm, pm2, tmp, _i, _j, _k, _l, _len, _len1, _len2, _len3;
+      var b, b2, cost, m, m2, maxopp, maxrate, opp, pm, pm2, r, tmp, _i, _j, _k, _l, _len, _len1, _len2, _len3;
+      this.board = board;
       opp = side === 1 ? 2 : 1;
       pm = board.possibleMoves(side);
       b = new ReversiBoard(board.field_size);
@@ -278,8 +348,9 @@
         maxopp = 0;
         for (_j = 0, _len1 = pm2.length; _j < _len1; _j++) {
           m2 = pm2[_j];
-          if (maxopp < m2.flips.length) {
-            maxopp = m2.flips.length;
+          r = this.moveRate(m2);
+          if (maxopp < r) {
+            maxopp = r;
           }
         }
         m.rate = m.flips.length - maxopp;
@@ -325,7 +396,7 @@
         board.fill(b);
         b.apply(m.flips);
         a = this.preAlg.findAnyMove(board, opp);
-        m.rate = m.flips.length - a.rate;
+        m.rate = this.preAlg.moveRate(m) - a.rate;
       }
       maxrate = -board.maxscore();
       for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
@@ -356,18 +427,22 @@
     function MonteAlg() {}
 
     MonteAlg.prototype.bestMoves = function(board, side) {
-      var b, b2, cost, gameOver, i, m, maxrate, n, opp, pm, rate, rm, rpm, tmp, _i, _j, _k, _l, _len, _len1, _len2;
+      var a, algs, b, b2, cost, gameOver, i, m, maxrate, n, opp, pm, rate, rm, rpm, tmp, _i, _j, _k, _l, _len, _len1, _len2;
       opp = side === 1 ? 2 : 1;
       pm = board.possibleMoves(side);
       b = new ReversiBoard(board.field_size);
       b2 = new ReversiBoard(board.field_size);
       cost = 1;
+      algs = [];
+      algs.push(new SimpleAlg());
+      algs.push(new ConservAlg());
+      algs.push(new ContrAlg(new ConservAlg()));
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
         board.fill(b);
         b.apply(m.flips);
         rate = 0;
-        for (i = _j = 1; _j <= 1000; i = ++_j) {
+        for (i = _j = 1; _j <= 500; i = ++_j) {
           gameOver = 1 === 0;
           n = 0;
           while ((!gameOver) && (n < (board.field_size * board.field_size + 10))) {
@@ -376,6 +451,7 @@
             rpm = b.possibleMoves(opp);
             if (rpm.length > 0) {
               gameOver = 1 === 0;
+              a = getRandomA(algs);
               rm = getRandomA(rpm);
               b.setState(rm.y, rm.x, opp);
               b.apply(rm.flips);
@@ -388,11 +464,15 @@
               b.apply(rm.flips);
             }
           }
-          if (b.score_side(side) >= b.score_side(opp)) {
-            rate++;
-          }
+          rate += b.score_side(side);
         }
         m.rate = rate;
+        if (board.isCorner(m.x, m.y)) {
+          m.rate = rate * 2;
+        }
+        if (board.isPreCorner(m.x, m.y)) {
+          m.rate = rate % 2;
+        }
       }
       maxrate = 0;
       for (_k = 0, _len1 = pm.length; _k < _len1; _k++) {
@@ -422,7 +502,7 @@
   Reversi2 = (function() {
     function Reversi2() {
       this.calg = new ConservAlg();
-      this.alg = new MonteAlg(this.calg);
+      this.alg = new ContrAlg(this.calg);
     }
 
     Reversi2.prototype.clicker = function(i, j) {
@@ -510,28 +590,29 @@
     };
 
     Reversi2.prototype.init = function() {
-      var btn_init, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
+      var btn_cons, btn_cons2, btn_greedy, btn_monte, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
-      btn_init = $('<button>Greedy</button>').appendTo(ctrldiv);
-      btn_init.click((function(_this) {
+      btn_cons = $('<p>Компьютер ирает:</p>').appendTo(ctrldiv);
+      btn_greedy = $('<button>Жадно</button>').appendTo(ctrldiv);
+      btn_greedy.click((function(_this) {
         return function() {
-          return _this.initFieldGreegy();
+          return _this.initFieldGreedy();
         };
       })(this));
-      btn_init = $('<button>Conserv</button>').appendTo(ctrldiv);
-      btn_init.click((function(_this) {
+      btn_cons = $('<button>Осторожно</button>').appendTo(ctrldiv);
+      btn_cons.click((function(_this) {
         return function() {
           return _this.initFieldConserv();
         };
       })(this));
-      btn_init = $('<button>Cons++++</button>').appendTo(ctrldiv);
-      btn_init.click((function(_this) {
+      btn_cons2 = $('<button>Оптимистично</button>').appendTo(ctrldiv);
+      btn_cons2.click((function(_this) {
         return function() {
           return _this.initFieldConserv2();
         };
       })(this));
-      btn_init = $('<button>Monte</button>').appendTo(ctrldiv);
-      btn_init.click((function(_this) {
+      btn_monte = $('<button>Загадочно</button>').appendTo(ctrldiv);
+      btn_monte.click((function(_this) {
         return function() {
           return _this.initFieldMonte();
         };

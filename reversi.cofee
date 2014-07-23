@@ -96,6 +96,13 @@ class ReversiBoard
             opp=1
         return @score_side(s)-@score_side(opp)
     
+    gameOver: () ->
+        res=(1==1)
+        pm=@possibleMoves(1)
+        res=(1==0) if pm.length>0
+        pm=@possibleMoves(2)
+        res=(1==0) if pm.length>0
+        
     possibleMoves: (side) ->
         tmpflips=[]
         foundflips=[]
@@ -113,35 +120,54 @@ class ReversiBoard
         
         return moves
     
+    isCorner: (j,i)->(j==1 or j==@field_size) and (i==1 or i==@field_size) 
+    
+    isPreCorner: (j,i)->
+        res=(1==2)
+        if (j==2 or j==@field_size-1) and ( i==1 or i==2 or i==@field_size or i==@field_size-1 ) 
+            res=(1==1) 
+        if (i==2 or i==@field_size-1) and ( j==1 or j==2 or j==@field_size or j==@field_size-1 )
+            res=(1==1) 
+        return res
+
     setState: (i,j,p)->@field[i][j]=p
     getState: (i,j,p)->return @field[i][j]
+    opp: (side) -> return if side==1 then 2 else 1
 
 
     
 #==========================================================================
 # тупо жадный алгоритм - переверни побольше
-class SimpleAlg
+class RandomAlg
     findAnyMove: (board,side) ->
-        opp= if side==1 then 2 else 1
-        tmpflips=[]
-        foundflips=[]
-        found_y=0
-        found_x=0
         pm=board.possibleMoves(side)
-        
+        return getRandomA(pm)
+
+class SimpleAlg
+    moveRate: (m) ->
+        res=m.flips.length
+        if @board.isCorner(m.y,m.x)
+            res=res+10
+        if @board.isPreCorner(m.y,m.x)
+            res=res-10
+        return res
+    findAnyMove: (board,side) ->
+        @board=board
+        opp= board.opp(side)
+        pm=board.possibleMoves(side)
+        maxrate=(-board.maxscore())*2
+        tmp=[]
         for m in pm
-            if m.flips.length>foundflips.length
-                foundflips=[]
-                found_y=m.y
-                found_x=m.x
-                for t in m.flips 
-                    foundflips.push(t)
-               
-        result=
-            x:found_x
-            y:found_y
-            flips:foundflips
-        return result
+            r=@moveRate(m)
+            if r=maxrate
+                tmp.push m
+            if r>maxrate
+                tmp=[]
+                tmp.push m
+                maxrate=r
+                res=m
+                res.rate=r
+        return getRandomA(tmp)
 
 
 getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
@@ -150,7 +176,16 @@ getRandomA= (a)->return a[getRandomInt(0,a.length-1)]
 #==========================================================================
 # осторожный алгоритм - не дает после себя съесть много
 class ConservAlg
+    moveRate: (m) ->
+        res=m.flips.length
+        if @board.isPreCorner(m.y,m.x)
+            res=res-15
+        if @board.isCorner(m.y,m.x)
+            res=res+10
+        return res
+            
     bestMoves: (board,side) ->
+        @board=board
         opp= if side==1 then 2 else 1
         pm=board.possibleMoves(side)
         b = new ReversiBoard(board.field_size)
@@ -164,7 +199,8 @@ class ConservAlg
             maxopp=0
             #ищем сколько он может максимально перевернуть
             for m2 in pm2
-                maxopp=m2.flips.length if maxopp<m2.flips.length
+                r=@moveRate(m2)
+                maxopp=r if maxopp<r
             # рейтинг хода мои перевороты - макс его 
             m.rate=m.flips.length-maxopp
             
@@ -195,7 +231,7 @@ class ContrAlg
             board.fill(b)
             b.apply(m.flips)
             a=@preAlg.findAnyMove(board,opp)
-            m.rate=m.flips.length-a.rate
+            m.rate=@preAlg.moveRate(m)-a.rate
             
         maxrate=-board.maxscore()
         for m in pm
@@ -217,11 +253,16 @@ class MonteAlg
         b = new ReversiBoard(board.field_size)
         b2 = new ReversiBoard(board.field_size)
         cost=1
+        algs=[]
+        #algs.push(new RandomAlg())
+        algs.push(new SimpleAlg())
+        algs.push(new ConservAlg())
+        algs.push(new ContrAlg(new ConservAlg()))
         for m in pm
             board.fill(b)
             b.apply(m.flips)
             rate=0
-            for i in [1..1000]
+            for i in [1..500]
                 gameOver=(1==0)
                 n=0
                 while ( not gameOver ) and ( n < ( board.field_size * board.field_size + 10 ) )
@@ -230,17 +271,23 @@ class MonteAlg
                     rpm=b.possibleMoves(opp)
                     if rpm.length>0
                         gameOver=(1==0)
+                        a=getRandomA(algs)
+                        #rm=a.findAnyMove(b,opp)
                         rm=getRandomA(rpm)
                         b.setState(rm.y,rm.x,opp)
                         b.apply(rm.flips)
                     rpm=b.possibleMoves(side)
                     if rpm.length>0
                         gameOver=(1==0)
+                        #a=getRandomA(algs)
                         rm=getRandomA(rpm)
                         b.setState(rm.y,rm.x,side)
                         b.apply(rm.flips)
-                rate++ if b.score_side(side)>=b.score_side(opp)
-            m.rate=rate;
+                rate+=b.score_side(side)
+            m.rate=rate
+            # углам рейтинг добавим
+            m.rate=rate*2 if board.isCorner(m.x,m.y)
+            m.rate=rate%2 if board.isPreCorner(m.x,m.y)
         maxrate=0
         for m in pm
             if m.rate>maxrate
@@ -258,8 +305,9 @@ class MonteAlg
 class Reversi2
     constructor:()->
         @calg=new ConservAlg()
-#        @alg=new ContrAlg(@calg)
-        @alg=new MonteAlg(@calg)
+        @alg=new ContrAlg(@calg)
+        #@alg=new MonteAlg(@calg)
+        #@alg=new ConservAlg()
         
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
 
@@ -315,17 +363,18 @@ class Reversi2
     init: () -> 
         ctrldiv=$('<div></div>')
         
-        btn_init=$('<button>Greedy</button>').appendTo(ctrldiv)
-        btn_init.click ()=>@initFieldGreegy()
+        btn_cons=$('<p>Компьютер ирает:</p>').appendTo(ctrldiv)
+        btn_greedy=$('<button>Жадно</button>').appendTo(ctrldiv)
+        btn_greedy.click ()=> @initFieldGreedy()
         
-        btn_init=$('<button>Conserv</button>').appendTo(ctrldiv)
-        btn_init.click ()=>@initFieldConserv()
+        btn_cons=$('<button>Осторожно</button>').appendTo(ctrldiv)
+        btn_cons.click ()=>@initFieldConserv()
 
-        btn_init=$('<button>Cons++++</button>').appendTo(ctrldiv)
-        btn_init.click ()=>@initFieldConserv2()
+        btn_cons2=$('<button>Оптимистично</button>').appendTo(ctrldiv)
+        btn_cons2.click ()=>@initFieldConserv2()
         
-        btn_init=$('<button>Monte</button>').appendTo(ctrldiv)
-        btn_init.click ()=>@initFieldMonte()
+        btn_monte=$('<button>Загадочно</button>').appendTo(ctrldiv)
+        btn_monte.click ()=>@initFieldMonte()
         
         $('<p></p>').appendTo(ctrldiv)
         $('<span>X:</span>').appendTo(ctrldiv)
