@@ -665,7 +665,7 @@
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
-      this.field_size = 6;
+      this.field_size = 8;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];

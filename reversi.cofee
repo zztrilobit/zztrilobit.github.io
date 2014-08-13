@@ -413,7 +413,7 @@ class Reversi2
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
         tbl.appendTo($("#root"))
-        @field_size = 6
+        @field_size = 8
         @field=([1..@field_size+1] for i in [1..@field_size+1])
         @rb=new ReversiBoard(@field_size)
         for i in [1..@field_size] 
