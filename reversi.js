@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, reversi;
+  var ConservAlg, ContrAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -188,8 +188,9 @@
       }
       pm = this.possibleMoves(2);
       if (pm.length > 0) {
-        return res = 1 === 0;
+        res = 1 === 0;
       }
+      return res;
     };
 
     ReversiBoard.prototype.possibleMoves = function(side) {
@@ -302,7 +303,7 @@
           res.rate = r;
         }
       }
-      return getRandomA(tmp);
+      return getRandomM(tmp);
     };
 
     return SimpleAlg;
@@ -315,6 +316,22 @@
 
   getRandomA = function(a) {
     return a[getRandomInt(0, a.length - 1)];
+  };
+
+  getRandomM = function(a) {
+    var res;
+    if (a.length > 0) {
+      res = a[getRandomInt(0, a.length - 1)];
+      res.not_found = 1 === 0;
+    } else {
+      res = {
+        x: 0,
+        y: 0,
+        flips: []
+      };
+      res.not_found = 1 === 1;
+    }
+    return res;
   };
 
   ConservAlg = (function() {
@@ -373,7 +390,7 @@
     };
 
     ConservAlg.prototype.findAnyMove = function(board, side) {
-      return getRandomA(this.bestMoves(board, side));
+      return getRandomM(this.bestMoves(board, side));
     };
 
     return ConservAlg;
@@ -395,8 +412,12 @@
         m = pm[_i];
         board.fill(b);
         b.apply(m.flips);
-        a = this.preAlg.findAnyMove(board, opp);
-        m.rate = this.preAlg.moveRate(m) - a.rate;
+        if ((board.possibleMoves(opp)).length > 0) {
+          a = this.preAlg.findAnyMove(board, opp);
+          m.rate = this.preAlg.moveRate(m) - a.rate;
+        } else {
+          m.rate = this.preAlg.moveRate(m);
+        }
       }
       maxrate = -board.maxscore();
       for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
@@ -416,7 +437,7 @@
     };
 
     ContrAlg.prototype.findAnyMove = function(board, side) {
-      return getRandomA(this.bestMoves(board, side));
+      return getRandomM(this.bestMoves(board, side));
     };
 
     return ContrAlg;
@@ -492,7 +513,7 @@
     };
 
     MonteAlg.prototype.findAnyMove = function(board, side) {
-      return getRandomA(this.bestMoves(board, side));
+      return getRandomM(this.bestMoves(board, side));
     };
 
     return MonteAlg;
@@ -529,9 +550,9 @@
         }
       }
       myMove = 1 === 1;
-      done = 1 === 0;
       this.draw();
       r = this.findAnyMove(2);
+      done = this.rb.gameOver();
       while (myMove && (!done)) {
         if (r.flips.length > 0) {
           this.rb.setState(r.y, r.x, 2);
@@ -546,7 +567,7 @@
         }
       }
       this.draw();
-      if (done) {
+      if (this.rb.gameOver()) {
         alert("Game over!");
       }
     };
@@ -644,7 +665,7 @@
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
-      this.field_size = 8;
+      this.field_size = 6;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];

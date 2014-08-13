@@ -102,6 +102,7 @@ class ReversiBoard
         res=(1==0) if pm.length>0
         pm=@possibleMoves(2)
         res=(1==0) if pm.length>0
+        return res
         
     possibleMoves: (side) ->
         tmpflips=[]
@@ -167,11 +168,22 @@ class SimpleAlg
                 maxrate=r
                 res=m
                 res.rate=r
-        return getRandomA(tmp)
+        return getRandomM(tmp)
 
 
 getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
+
 getRandomA= (a)->return a[getRandomInt(0,a.length-1)]         
+
+getRandomM= (a)->
+    if a.length>0
+        res=a[getRandomInt(0,a.length-1)]
+        res.not_found=(1==0)
+    else
+        res=(x:0,y:0,flips:[])
+        res.not_found=(1==1)
+    return res
+    
         
 #==========================================================================
 # осторожный алгоритм - не дает после себя съесть много
@@ -215,7 +227,7 @@ class ConservAlg
         return tmp
 
     findAnyMove: (board,side) ->
-        return getRandomA(@bestMoves(board,side))
+        return getRandomM(@bestMoves(board,side))
         
 class ContrAlg
     constructor:(pa)->
@@ -230,8 +242,11 @@ class ContrAlg
         for m in pm
             board.fill(b)
             b.apply(m.flips)
-            a=@preAlg.findAnyMove(board,opp)
-            m.rate=@preAlg.moveRate(m)-a.rate
+            
+            if (board.possibleMoves(opp)).length>0
+                a=@preAlg.findAnyMove(board,opp)
+                m.rate=@preAlg.moveRate(m)-a.rate
+            else m.rate=@preAlg.moveRate(m)
             
         maxrate=-board.maxscore()
         for m in pm
@@ -244,7 +259,7 @@ class ContrAlg
         return tmp
         
     findAnyMove: (board,side) ->
-        return getRandomA(@bestMoves(board,side))
+        return getRandomM(@bestMoves(board,side))
 
 class MonteAlg 
     bestMoves: (board,side) ->
@@ -299,7 +314,7 @@ class MonteAlg
         return tmp
         
     findAnyMove: (board,side) ->
-        return getRandomA(@bestMoves(board,side))
+        return getRandomM(@bestMoves(board,side))
     
 #==========================================================================
 class Reversi2
@@ -325,9 +340,10 @@ class Reversi2
                 alert "Ход неверен, есть возможность правильного хода"
                 return
         myMove=(1==1)
-        done=(1==0)
+        
         @draw()
         r=@findAnyMove(2)
+        done=@rb.gameOver()
         while myMove and (not done) 
             if r.flips.length>0
                 @rb.setState(r.y,r.x,2)
@@ -340,8 +356,8 @@ class Reversi2
                 r=@findAnyMove(2)
                 done=(r.flips.length == 0)
         @draw()
-        alert("Game over!") if done
         
+        alert("Game over!") if @rb.gameOver()        
         return
 
     findAnyMove: (side) ->
@@ -397,7 +413,7 @@ class Reversi2
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
         tbl.appendTo($("#root"))
-        @field_size = 8
+        @field_size = 6
         @field=([1..@field_size+1] for i in [1..@field_size+1])
         @rb=new ReversiBoard(@field_size)
         for i in [1..@field_size] 
