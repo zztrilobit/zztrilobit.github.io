@@ -473,14 +473,15 @@
             if (rpm.length > 0) {
               gameOver = 1 === 0;
               a = getRandomA(algs);
-              rm = getRandomA(rpm);
+              rm = a.findAnyMove(b, opp);
               b.setState(rm.y, rm.x, opp);
               b.apply(rm.flips);
             }
             rpm = b.possibleMoves(side);
             if (rpm.length > 0) {
               gameOver = 1 === 0;
-              rm = getRandomA(rpm);
+              a = getRandomA(algs);
+              rm = a.findAnyMove(b, side);
               b.setState(rm.y, rm.x, side);
               b.apply(rm.flips);
             }
@@ -542,6 +543,10 @@
       if (flips.length > 0) {
         this.rb.setState(i, j, 1);
         this.rb.apply(flips);
+        this.last_x = {
+          y: i,
+          x: j
+        };
       } else {
         r = this.rb.possibleMoves(1);
         if (r.length > 0) {
@@ -553,10 +558,15 @@
       this.draw();
       r = this.findAnyMove(2);
       done = this.rb.gameOver();
+      this.last_o = [];
       while (myMove && (!done)) {
         if (r.flips.length > 0) {
           this.rb.setState(r.y, r.x, 2);
           this.rb.apply(r.flips);
+          this.last_o.push({
+            y: r.y,
+            x: r.x
+          });
         }
         r = this.findAnyMove(1);
         if (r.flips.length > 0) {
@@ -592,37 +602,54 @@
       }
     };
 
-    Reversi2.prototype.draw = function() {
-      var i, j, _i, _ref, _results;
-      this.calc();
-      _results = [];
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push((function() {
-          var _j, _ref1, _results1;
-          _results1 = [];
-          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            switch (this.rb.getState(i, j)) {
-              case 0:
-                _results1.push(this.field[i][j].html(' '));
-                break;
-              case 1:
-                _results1.push(this.field[i][j].html('<b>X</b>'));
-                break;
-              case 2:
-                _results1.push(this.field[i][j].html('<b>O</b>'));
-                break;
-              default:
-                _results1.push(void 0);
-            }
-          }
-          return _results1;
-        }).call(this));
+    Reversi2.prototype.view = function(mode) {
+      this.mode = mode;
+      if (mode === 0) {
+        this.xtag = '<b>X</b>';
+        this.otag = '<b>O</b>';
       }
-      return _results;
+      if (mode === 1) {
+        this.xtag = '<b>#</b>';
+        this.otag = '<b>#</b>';
+      }
+      if (mode === 2) {
+        this.xtag = ' ';
+        this.otag = ' ';
+      }
+      return this.draw();
+    };
+
+    Reversi2.prototype.draw = function() {
+      var i, j, t, _i, _j, _k, _len, _ref, _ref1, _ref2, _results;
+      this.calc();
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          switch (this.rb.getState(i, j)) {
+            case 0:
+              this.field[i][j].html(' ');
+              break;
+            case 1:
+              this.field[i][j].html(this.xtag);
+              break;
+            case 2:
+              this.field[i][j].html(this.otag);
+          }
+        }
+      }
+      if (this.undo_data.length > 0) {
+        this.field[this.last_x.y][this.last_x.x].html('<b>X</b>');
+        _ref2 = this.last_o;
+        _results = [];
+        for (_k = 0, _len = _ref2.length; _k < _len; _k++) {
+          t = _ref2[_k];
+          _results.push(this.field[t.y][t.x].html('<b>O</b>'));
+        }
+        return _results;
+      }
     };
 
     Reversi2.prototype.init = function() {
-      var btn_cons, btn_cons2, btn_greedy, btn_monte, btn_undo, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
+      var btn_cons, btn_cons2, btn_greedy, btn_monte, btn_undo, btn_view_all, btn_view_none, btn_view_space, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
       btn_cons = $('<p>Компьютер ирает:</p>').appendTo(ctrldiv);
       btn_greedy = $('<button>Жадно</button>').appendTo(ctrldiv);
@@ -655,6 +682,26 @@
       $('<p></p>').appendTo(ctrldiv);
       $('<span>O:</span>').appendTo(ctrldiv);
       this.spanO = $('<span></span>').appendTo(ctrldiv);
+      $('<p></p>').appendTo(ctrldiv);
+      $('<p>Отображать доску:</p>').appendTo(ctrldiv);
+      btn_view_all = $('<button>Все</button>').appendTo(ctrldiv);
+      btn_view_all.click((function(_this) {
+        return function() {
+          return _this.view(0);
+        };
+      })(this));
+      btn_view_space = $('<button>Занятые</button>').appendTo(ctrldiv);
+      btn_view_space.click((function(_this) {
+        return function() {
+          return _this.view(1);
+        };
+      })(this));
+      btn_view_none = $('<button>Ничего</button>').appendTo(ctrldiv);
+      btn_view_none.click((function(_this) {
+        return function() {
+          return _this.view(2);
+        };
+      })(this));
       $('<p></p>').appendTo(ctrldiv);
       btn_undo = $('<button>Отмена</button>').appendTo(ctrldiv);
       btn_undo.click((function(_this) {
@@ -715,7 +762,12 @@
 
     Reversi2.prototype.initField = function() {
       this.rb.init();
-      this.draw();
+      this.last_o = [];
+      this.last_x = {
+        x: 0,
+        y: 0
+      };
+      this.view(0);
       return this.undo_data = [];
     };
 

@@ -287,15 +287,16 @@ class MonteAlg
                     if rpm.length>0
                         gameOver=(1==0)
                         a=getRandomA(algs)
-                        #rm=a.findAnyMove(b,opp)
-                        rm=getRandomA(rpm)
+                        rm=a.findAnyMove(b,opp)
+                        #rm=getRandomA(rpm)
                         b.setState(rm.y,rm.x,opp)
                         b.apply(rm.flips)
                     rpm=b.possibleMoves(side)
                     if rpm.length>0
                         gameOver=(1==0)
-                        #a=getRandomA(algs)
-                        rm=getRandomA(rpm)
+                        a=getRandomA(algs)
+                        rm=a.findAnyMove(b,side)
+                        #rm=getRandomA(rpm)
                         b.setState(rm.y,rm.x,side)
                         b.apply(rm.flips)
                 rate+=b.score_side(side)
@@ -334,6 +335,8 @@ class Reversi2
         if flips.length>0
             @rb.setState(i,j,1)
             @rb.apply(flips)
+            
+            @last_x=(y:i,x:j)
         else 
             r=@rb.possibleMoves(1)
             if r.length>0 
@@ -344,10 +347,12 @@ class Reversi2
         @draw()
         r=@findAnyMove(2)
         done=@rb.gameOver()
+        @last_o=[]
         while myMove and (not done) 
             if r.flips.length>0
                 @rb.setState(r.y,r.x,2)
                 @rb.apply(r.flips)
+                @last_o.push( (y:r.y, x:r.x) )
                 
             r=@findAnyMove(1)
             if r.flips.length>0
@@ -373,16 +378,33 @@ class Reversi2
             uu=@undo_data.pop()
             uu.fill(@rb)
             @draw()
-            
+    view: (mode) ->
+        @mode=mode
+        if mode==0 
+            @xtag='<b>X</b>'
+            @otag='<b>O</b>'
+        if mode==1
+            @xtag='<b>#</b>'
+            @otag='<b>#</b>'        
+        if mode==2
+            @xtag=' '
+            @otag=' '
+        @draw()
+        
     draw: () ->
         @calc()
         for i in [1..@field_size] 
             for j in [1..@field_size]
                 switch @rb.getState(i,j)
                     when 0 then @field[i][j].html(' ')
-                    when 1 then @field[i][j].html('<b>X</b>')
-                    when 2 then @field[i][j].html('<b>O</b>')
+                    when 1 then @field[i][j].html(@xtag)
+                    when 2 then @field[i][j].html(@otag)
         
+        #последний ход всегда показываем            
+        if @undo_data.length>0
+            @field[@last_x.y][@last_x.x].html('<b>X</b>')
+            for t in @last_o
+                @field[t.y][t.x].html('<b>O</b>')
         
     init: () -> 
         ctrldiv=$('<div></div>')
@@ -406,6 +428,18 @@ class Reversi2
         $('<p></p>').appendTo(ctrldiv)
         $('<span>O:</span>').appendTo(ctrldiv)
         @spanO=$('<span></span>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        
+        $('<p>Отображать доску:</p>').appendTo(ctrldiv)
+        btn_view_all=$('<button>Все</button>').appendTo(ctrldiv)
+        btn_view_all.click ()=> @view(0)
+        
+        btn_view_space=$('<button>Занятые</button>').appendTo(ctrldiv)
+        btn_view_space.click ()=> @view(1)
+
+        btn_view_none=$('<button>Ничего</button>').appendTo(ctrldiv)
+        btn_view_none.click ()=> @view(2)
+        
         $('<p></p>').appendTo(ctrldiv)
         btn_undo=$('<button>Отмена</button>').appendTo(ctrldiv)
         btn_undo.click ()=> @doUndo()
@@ -447,7 +481,9 @@ class Reversi2
 
     initField:()->
         @rb.init()
-        @draw()
+        @last_o=[]
+        @last_x=(x:0,y:0)
+        @view(0)
         @undo_data=[]
         
 reversi= new Reversi2
