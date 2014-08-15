@@ -10,6 +10,8 @@
         @field[1][7]=2
         @field[7][1]=2
         
+    getState:(i,j) -> @field[i][j]
+    
     empty_move: () -> (side:0, from:(x:0,y:0), to:(x:0,y:0), type:'', flips:[])
 
     in_field:(i,j) -> (i>0) and (i<=@field_size) and (j>0) and (j<=@field_size)  
@@ -49,6 +51,7 @@
         m.to.y=to.y
         if (dx==2) or (dy==2) or (dx==-2) or (dy==-2) then m.type='j' else m.type='s'
         m.flips=@list_cnt(to.y,to.x,@opposite(side))
+        return m
         
     #доступные ходы
     possible_moves: (side) ->
@@ -86,7 +89,7 @@ class DisplayBoard
                 
                 cell.click @clicker(i,j)
             @tbl.append(row)
-        @draw
+        @draw()
 
     ready: () ->
         @click_phase=1
@@ -96,14 +99,16 @@ class DisplayBoard
     clicker: (i,j) -> return (event) => @onCellClick(i,j)
     
     onCellClick: (i,j) ->
-        if (click_phase==1)  
+        if (@click_phase==1)  
             if (@board.field[i][j]==1)
                 @from.x=j
                 @from.y=i
                 @click_phase=2
-            else alert('Человек играет крестиками')
+            else 
+                alert('Человек играет крестиками')
+            return
             
-        if click_phase==2
+        if @click_phase==2
             dx= j - @from.x
             dy= i - @from.y
             err=(1==0)
@@ -114,8 +119,8 @@ class DisplayBoard
                 err=(1==1)
                 err_msg="Поле занято"
             if not err 
-                m=@board.construct_move( from, (y:i, x:j) )
-                board.do_move(m)
+                m=@board.construct_move( @from, (y:i, x:j), 1 )
+                @board.do_move(1,m)
             else 
                 alert err_msg
             @ready()
@@ -124,7 +129,7 @@ class DisplayBoard
     draw: ()->
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                switch @rb.getState(i,j)
+                switch @board.getState(i,j)
                     when 0 then @field[i][j].html(' ')
                     when 1 then @field[i][j].html(@xtag)
                     when 2 then @field[i][j].html(@otag)

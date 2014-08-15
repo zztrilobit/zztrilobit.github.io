@@ -28,6 +28,10 @@
       this.field[7][1] = 2;
     }
 
+    AtaxxBoard.prototype.getState = function(i, j) {
+      return this.field[i][j];
+    };
+
     AtaxxBoard.prototype.empty_move = function() {
       return {
         side: 0,
@@ -112,7 +116,8 @@
       } else {
         m.type = 's';
       }
-      return m.flips = this.list_cnt(to.y, to.x, this.opposite(side));
+      m.flips = this.list_cnt(to.y, to.x, this.opposite(side));
+      return m;
     };
 
     AtaxxBoard.prototype.possible_moves = function(side) {
@@ -181,7 +186,7 @@
         }
         this.tbl.append(row);
       }
-      this.draw;
+      this.draw();
     }
 
     DisplayBoard.prototype.ready = function() {
@@ -206,7 +211,7 @@
 
     DisplayBoard.prototype.onCellClick = function(i, j) {
       var dx, dy, err, err_msg, m;
-      if (click_phase === 1) {
+      if (this.click_phase === 1) {
         if (this.board.field[i][j] === 1) {
           this.from.x = j;
           this.from.y = i;
@@ -214,8 +219,9 @@
         } else {
           alert('Человек играет крестиками');
         }
+        return;
       }
-      if (click_phase === 2) {
+      if (this.click_phase === 2) {
         dx = j - this.from.x;
         dy = i - this.from.y;
         err = 1 === 0;
@@ -228,11 +234,11 @@
           err_msg = "Поле занято";
         }
         if (!err) {
-          m = this.board.construct_move(from, {
+          m = this.board.construct_move(this.from, {
             y: i,
             x: j
-          });
-          board.do_move(m);
+          }, 1);
+          this.board.do_move(1, m);
         } else {
           alert(err_msg);
         }
@@ -249,7 +255,7 @@
           var _j, _ref1, _results1;
           _results1 = [];
           for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            switch (this.rb.getState(i, j)) {
+            switch (this.board.getState(i, j)) {
               case 0:
                 _results1.push(this.field[i][j].html(' '));
                 break;

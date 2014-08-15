@@ -72,6 +72,11 @@ class ReversiBoard
         for flip in flips 
             @roll(flip.y,flip.x)
 
+    do_move: (m,side) ->
+        @field[m.y][m.x]=side
+        for flip in m.flips 
+            @roll(flip.y,flip.x)
+
     score: () ->
         scoreX=0
         scoreO=0
@@ -97,28 +102,22 @@ class ReversiBoard
         return @score_side(s)-@score_side(opp)
     
     gameOver: () ->
-        res=(1==1)
-        pm=@possibleMoves(1)
-        res=(1==0) if pm.length>0
-        pm=@possibleMoves(2)
-        res=(1==0) if pm.length>0
-        return res
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                tmpflips=@getFlips(i,j,1)
+                if tmpflips.length>0 then return 1==0
+                tmpflips=@getFlips(i,j,2)
+                if tmpflips.length>0 then return 1==0
+        return 1==1
         
     possibleMoves: (side) ->
         tmpflips=[]
-        foundflips=[]
-        found_y=0
-        found_x=0
         moves=[]
         for i in [1..@field_size] 
             for j in [1..@field_size]
                 tmpflips=@getFlips(i,j,side)
                 if tmpflips.length>0
-                    foundflips=[]
-                    found_y=i
-                    found_x=j
-                    moves.push((y:found_y, x:found_x, flips:tmpflips))
-        
+                    moves.push((y:i, x:j, flips:tmpflips))        
         return moves
     
     isCorner: (j,i)->(j==1 or j==@field_size) and (i==1 or i==@field_size) 
@@ -183,7 +182,97 @@ getRandomM= (a)->
         res=(x:0,y:0,flips:[])
         res.not_found=(1==1)
     return res
+
+class MinMaxAlg
+    constructor: (depth) ->
+        @depth=depth
+        
+    rate:(board,side) ->
+        opp= if side==1 then 2 else 1
+        fs=board.field_size
+        res=board.score_side(side)
+
+        if not board.gameOver()
+            for i in [1..@field_size] 
+                for j in [1..@field_size]
+                    if board.isCorner(i,j) and board.field[i][j]==side then res+=15
+                    if board.isCorner(i,j) and board.field[i][j]==opp then res-=15
+
+                    if board.isPreCorner(i,j) and board.field[i][j]==side then res-=15
+                    if board.isPreCorner(i,j) and board.field[i][j]==opp then res+=15
+        
+        return res
+        
+    boardScore: (board, side, depth) ->
+        @cnt++;
+        if (depth==0) or ( board.gameOver() ) 
+            return @rate(board,side)
+        else
+            return @mx_mn(board,side,depth-1)
     
+    #side - чья очередь ходить. он выбирает наилучший ход, минимизирующий сильный ответ оппонента
+    mx_mn: (board, side, depth) ->
+        opp= if side==1 then 2 else 1
+        
+        if board.gameOver() then return board.score_side(side)
+        
+        b = new ReversiBoard(board.field_size)
+        b2 = new ReversiBoard(board.field_size)
+        res=-1000
+        for m in board.possibleMoves(side)
+            board.fill(b)
+            b.do_move(m,side)
+            
+            if b.gameOver() 
+                curr_rate=b.score_side(side)
+            else
+                # наихудший для нас ответ оппонента
+                r=1000
+                for mopp in b.possibleMoves(opp)
+                    b.fill(b2)
+                    b2.do_move(mopp,opp)
+                    if b2.gameOver() or @cnt>120000
+                        rr=@rate(b2,side)
+                    else
+                        rr=@boardScore(b2,side,depth)
+                    r=rr if rr<r
+                curr_rate=r
+            res=curr_rate if curr_rate>res
+        return res
+            
+    bestMoves: (board,side) ->
+        @cnt=0
+        opp= if side==1 then 2 else 1
+        pm=board.possibleMoves(side)
+        b = new ReversiBoard(board.field_size)
+        b2 = new ReversiBoard(board.field_size)
+        minrate=1000
+        for m in pm
+            board.fill(b)
+            b.do_move(m,side)
+            if b.gameOver()
+                if b.score_side(side)>b.score_side(opp)
+                    #противник после нашего хода проиграл - ура!
+                    r=-1000
+                else
+                    r=1000
+            else
+                #оценим его шансы
+                r=@boardScore(b, opp, @depth)
+                m.rate=r
+                minrate=r if minrate>r
+            
+        tmp=[]
+        #из всех своих ходов отберем те, что оставляют меньше шансов противнику
+        for m in pm
+            if m.rate==minrate
+                tmp.push(m)
+        #alert "----->"+ @cnt
+        return tmp
+        
+        
+    findAnyMove: (board,side) ->
+        return getRandomM(@bestMoves(board,side))
         
 #==========================================================================
 # осторожный алгоритм - не дает после себя съесть много
@@ -205,7 +294,7 @@ class ConservAlg
         cost=1
         for m in pm
             board.fill(b)
-            b.apply(m.flips)
+            b.do_move(m,side)
             #возможные ответы оппонента на мой ход
             pm2=b.possibleMoves(opp)
             maxopp=0
@@ -241,7 +330,7 @@ class ContrAlg
         cost=1
         for m in pm
             board.fill(b)
-            b.apply(m.flips)
+            b.do_move(m,side)
             
             if (board.possibleMoves(opp)).length>0
                 a=@preAlg.findAnyMove(board,opp)
@@ -321,7 +410,8 @@ class MonteAlg
 class Reversi2
     constructor:()->
         @calg=new ConservAlg()
-        @alg=new ContrAlg(@calg)
+        #@alg=new ContrAlg(@calg)
+        @alg=new MinMaxAlg(2)
         @undo_data=[]
         #@alg=new MonteAlg(@calg)
         #@alg=new ConservAlg()
@@ -330,6 +420,10 @@ class Reversi2
 
     
     onCellClick: (i,j) ->
+        if @state=='busy'
+            alert 'Я еще думаю'
+            return
+        
         @undo_data.push(@rb.clone())
         flips = @rb.getFlips(i,j,1)
         if flips.length>0
@@ -348,25 +442,32 @@ class Reversi2
         r=@findAnyMove(2)
         done=@rb.gameOver()
         @last_o=[]
+        @state='busy'
+        @span_state.html('....Задумался....')
         while myMove and (not done) 
             if r.flips.length>0
                 @rb.setState(r.y,r.x,2)
                 @rb.apply(r.flips)
                 @last_o.push( (y:r.y, x:r.x) )
                 
-            r=@findAnyMove(1)
-            if r.flips.length>0
+            if @rb.possibleMoves(1).length>0
                 myMove=(1==0)
             else
                 r=@findAnyMove(2)
                 done=(r.flips.length == 0)
         @draw()
-        
+        @state='ready'
+        @span_state.html('Просмотрено '+@alg.cnt+' позиций')
         alert("Game over!") if @rb.gameOver()        
         return
 
     findAnyMove: (side) ->
-        return @alg.findAnyMove(@rb,side)
+        res=@alg.findAnyMove(@rb,side)
+        if @alg.cnt>70000 
+            if @alg.depth>0 then @alg.depth-- 
+        if @alg.cnt<1000 
+            if @alg.depth>0 then @alg.depth++ 
+        return res
 
     calc: () ->
         s=@rb.score()
@@ -410,17 +511,17 @@ class Reversi2
         ctrldiv=$('<div></div>')
         
         btn_cons=$('<p>Компьютер ирает:</p>').appendTo(ctrldiv)
-        btn_greedy=$('<button>Жадно</button>').appendTo(ctrldiv)
-        btn_greedy.click ()=> @initFieldGreedy()
+        btn_greedy=$('<button>Минимаксом</button>').appendTo(ctrldiv)
+        btn_greedy.click ()=> @initField()
         
-        btn_cons=$('<button>Осторожно</button>').appendTo(ctrldiv)
-        btn_cons.click ()=>@initFieldConserv()
+        #btn_cons=$('<button>Осторожно</button>').appendTo(ctrldiv)
+        #btn_cons.click ()=>@initFieldConserv()
 
-        btn_cons2=$('<button>Оптимистично</button>').appendTo(ctrldiv)
-        btn_cons2.click ()=>@initFieldConserv2()
+        #btn_cons2=$('<button>Оптимистично</button>').appendTo(ctrldiv)
+        #btn_cons2.click ()=>@initFieldConserv2()
         
-        btn_monte=$('<button>Загадочно</button>').appendTo(ctrldiv)
-        btn_monte.click ()=>@initFieldMonte()
+        #btn_monte=$('<button>Загадочно</button>').appendTo(ctrldiv)
+        #btn_monte.click ()=>@initFieldMonte()
         
         $('<p></p>').appendTo(ctrldiv)
         $('<span>X:</span>').appendTo(ctrldiv)
@@ -443,6 +544,8 @@ class Reversi2
         $('<p></p>').appendTo(ctrldiv)
         btn_undo=$('<button>Отмена</button>').appendTo(ctrldiv)
         btn_undo.click ()=> @doUndo()
+        
+        @span_state=$('<span></span>').appendTo(ctrldiv)
         
         ctrldiv.appendTo($("#root"))
         tbl=$('<table></table>')
@@ -485,7 +588,7 @@ class Reversi2
         @last_x=(x:0,y:0)
         @view(0)
         @undo_data=[]
-        
+        @state='ready'
 reversi= new Reversi2
 window.g_reversi = reversi
 

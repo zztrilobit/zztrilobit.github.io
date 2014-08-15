@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
+  var ConservAlg, ContrAlg, MinMaxAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -136,6 +136,18 @@
       return _results;
     };
 
+    ReversiBoard.prototype.do_move = function(m, side) {
+      var flip, _i, _len, _ref, _results;
+      this.field[m.y][m.x] = side;
+      _ref = m.flips;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        flip = _ref[_i];
+        _results.push(this.roll(flip.y, flip.x));
+      }
+      return _results;
+    };
+
     ReversiBoard.prototype.score = function() {
       var i, j, scoreO, scoreX, _i, _j, _ref, _ref1;
       scoreX = 0;
@@ -180,36 +192,33 @@
     };
 
     ReversiBoard.prototype.gameOver = function() {
-      var pm, res;
-      res = 1 === 1;
-      pm = this.possibleMoves(1);
-      if (pm.length > 0) {
-        res = 1 === 0;
+      var i, j, tmpflips, _i, _j, _ref, _ref1;
+      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          tmpflips = this.getFlips(i, j, 1);
+          if (tmpflips.length > 0) {
+            return 1 === 0;
+          }
+          tmpflips = this.getFlips(i, j, 2);
+          if (tmpflips.length > 0) {
+            return 1 === 0;
+          }
+        }
       }
-      pm = this.possibleMoves(2);
-      if (pm.length > 0) {
-        res = 1 === 0;
-      }
-      return res;
+      return 1 === 1;
     };
 
     ReversiBoard.prototype.possibleMoves = function(side) {
-      var found_x, found_y, foundflips, i, j, moves, tmpflips, _i, _j, _ref, _ref1;
+      var i, j, moves, tmpflips, _i, _j, _ref, _ref1;
       tmpflips = [];
-      foundflips = [];
-      found_y = 0;
-      found_x = 0;
       moves = [];
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
           tmpflips = this.getFlips(i, j, side);
           if (tmpflips.length > 0) {
-            foundflips = [];
-            found_y = i;
-            found_x = j;
             moves.push({
-              y: found_y,
-              x: found_x,
+              y: i,
+              x: j,
               flips: tmpflips
             });
           }
@@ -334,6 +343,131 @@
     return res;
   };
 
+  MinMaxAlg = (function() {
+    function MinMaxAlg(depth) {
+      this.depth = depth;
+    }
+
+    MinMaxAlg.prototype.rate = function(board, side) {
+      var fs, i, j, opp, res, _i, _j, _ref, _ref1;
+      opp = side === 1 ? 2 : 1;
+      fs = board.field_size;
+      res = board.score_side(side);
+      if (!board.gameOver()) {
+        for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+            if (board.isCorner(i, j) && board.field[i][j] === side) {
+              res += 15;
+            }
+            if (board.isCorner(i, j) && board.field[i][j] === opp) {
+              res -= 15;
+            }
+            if (board.isPreCorner(i, j) && board.field[i][j] === side) {
+              res -= 15;
+            }
+            if (board.isPreCorner(i, j) && board.field[i][j] === opp) {
+              res += 15;
+            }
+          }
+        }
+      }
+      return res;
+    };
+
+    MinMaxAlg.prototype.boardScore = function(board, side, depth) {
+      this.cnt++;
+      if ((depth === 0) || (board.gameOver())) {
+        return this.rate(board, side);
+      } else {
+        return this.mx_mn(board, side, depth - 1);
+      }
+    };
+
+    MinMaxAlg.prototype.mx_mn = function(board, side, depth) {
+      var b, b2, curr_rate, m, mopp, opp, r, res, rr, _i, _j, _len, _len1, _ref, _ref1;
+      opp = side === 1 ? 2 : 1;
+      if (board.gameOver()) {
+        return board.score_side(side);
+      }
+      b = new ReversiBoard(board.field_size);
+      b2 = new ReversiBoard(board.field_size);
+      res = -1000;
+      _ref = board.possibleMoves(side);
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        m = _ref[_i];
+        board.fill(b);
+        b.do_move(m, side);
+        if (b.gameOver()) {
+          curr_rate = b.score_side(side);
+        } else {
+          r = 1000;
+          _ref1 = b.possibleMoves(opp);
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            mopp = _ref1[_j];
+            b.fill(b2);
+            b2.do_move(mopp, opp);
+            if (b2.gameOver() || this.cnt > 120000) {
+              rr = this.rate(b2, side);
+            } else {
+              rr = this.boardScore(b2, side, depth);
+            }
+            if (rr < r) {
+              r = rr;
+            }
+          }
+          curr_rate = r;
+        }
+        if (curr_rate > res) {
+          res = curr_rate;
+        }
+      }
+      return res;
+    };
+
+    MinMaxAlg.prototype.bestMoves = function(board, side) {
+      var b, b2, m, minrate, opp, pm, r, tmp, _i, _j, _len, _len1;
+      this.cnt = 0;
+      opp = side === 1 ? 2 : 1;
+      pm = board.possibleMoves(side);
+      b = new ReversiBoard(board.field_size);
+      b2 = new ReversiBoard(board.field_size);
+      minrate = 1000;
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        board.fill(b);
+        b.do_move(m, side);
+        if (b.gameOver()) {
+          if (b.score_side(side) > b.score_side(opp)) {
+            r = -1000;
+          } else {
+            r = 1000;
+          }
+        } else {
+          r = this.boardScore(b, opp, this.depth);
+          m.rate = r;
+          if (minrate > r) {
+            minrate = r;
+          }
+        }
+      }
+      tmp = [];
+      for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
+        m = pm[_j];
+        if (m.rate === minrate) {
+          tmp.push(m);
+        }
+      }
+      return tmp;
+    };
+
+    MinMaxAlg.prototype.findAnyMove = function(board, side) {
+      return getRandomM(this.bestMoves(board, side));
+    };
+
+    return MinMaxAlg;
+
+  })();
+
   ConservAlg = (function() {
     function ConservAlg() {}
 
@@ -360,7 +494,7 @@
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
         board.fill(b);
-        b.apply(m.flips);
+        b.do_move(m, side);
         pm2 = b.possibleMoves(opp);
         maxopp = 0;
         for (_j = 0, _len1 = pm2.length; _j < _len1; _j++) {
@@ -411,7 +545,7 @@
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
         board.fill(b);
-        b.apply(m.flips);
+        b.do_move(m, side);
         if ((board.possibleMoves(opp)).length > 0) {
           a = this.preAlg.findAnyMove(board, opp);
           m.rate = this.preAlg.moveRate(m) - a.rate;
@@ -524,7 +658,7 @@
   Reversi2 = (function() {
     function Reversi2() {
       this.calg = new ConservAlg();
-      this.alg = new ContrAlg(this.calg);
+      this.alg = new MinMaxAlg(2);
       this.undo_data = [];
     }
 
@@ -538,6 +672,10 @@
 
     Reversi2.prototype.onCellClick = function(i, j) {
       var done, flips, myMove, r;
+      if (this.state === 'busy') {
+        alert('Я еще думаю');
+        return;
+      }
       this.undo_data.push(this.rb.clone());
       flips = this.rb.getFlips(i, j, 1);
       if (flips.length > 0) {
@@ -559,6 +697,8 @@
       r = this.findAnyMove(2);
       done = this.rb.gameOver();
       this.last_o = [];
+      this.state = 'busy';
+      this.span_state.html('....Задумался....');
       while (myMove && (!done)) {
         if (r.flips.length > 0) {
           this.rb.setState(r.y, r.x, 2);
@@ -568,8 +708,7 @@
             x: r.x
           });
         }
-        r = this.findAnyMove(1);
-        if (r.flips.length > 0) {
+        if (this.rb.possibleMoves(1).length > 0) {
           myMove = 1 === 0;
         } else {
           r = this.findAnyMove(2);
@@ -577,13 +716,27 @@
         }
       }
       this.draw();
+      this.state = 'ready';
+      this.span_state.html('Просмотрено ' + this.alg.cnt + ' позиций');
       if (this.rb.gameOver()) {
         alert("Game over!");
       }
     };
 
     Reversi2.prototype.findAnyMove = function(side) {
-      return this.alg.findAnyMove(this.rb, side);
+      var res;
+      res = this.alg.findAnyMove(this.rb, side);
+      if (this.alg.cnt > 70000) {
+        if (this.alg.depth > 0) {
+          this.alg.depth--;
+        }
+      }
+      if (this.alg.cnt < 1000) {
+        if (this.alg.depth > 0) {
+          this.alg.depth++;
+        }
+      }
+      return res;
     };
 
     Reversi2.prototype.calc = function() {
@@ -649,31 +802,13 @@
     };
 
     Reversi2.prototype.init = function() {
-      var btn_cons, btn_cons2, btn_greedy, btn_monte, btn_undo, btn_view_all, btn_view_none, btn_view_space, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
+      var btn_cons, btn_greedy, btn_undo, btn_view_all, btn_view_none, btn_view_space, cell, ctrldiv, i, j, row, tbl, _i, _j, _ref, _ref1;
       ctrldiv = $('<div></div>');
       btn_cons = $('<p>Компьютер ирает:</p>').appendTo(ctrldiv);
-      btn_greedy = $('<button>Жадно</button>').appendTo(ctrldiv);
+      btn_greedy = $('<button>Минимаксом</button>').appendTo(ctrldiv);
       btn_greedy.click((function(_this) {
         return function() {
-          return _this.initFieldGreedy();
-        };
-      })(this));
-      btn_cons = $('<button>Осторожно</button>').appendTo(ctrldiv);
-      btn_cons.click((function(_this) {
-        return function() {
-          return _this.initFieldConserv();
-        };
-      })(this));
-      btn_cons2 = $('<button>Оптимистично</button>').appendTo(ctrldiv);
-      btn_cons2.click((function(_this) {
-        return function() {
-          return _this.initFieldConserv2();
-        };
-      })(this));
-      btn_monte = $('<button>Загадочно</button>').appendTo(ctrldiv);
-      btn_monte.click((function(_this) {
-        return function() {
-          return _this.initFieldMonte();
+          return _this.initField();
         };
       })(this));
       $('<p></p>').appendTo(ctrldiv);
@@ -709,6 +844,7 @@
           return _this.doUndo();
         };
       })(this));
+      this.span_state = $('<span></span>').appendTo(ctrldiv);
       ctrldiv.appendTo($("#root"));
       tbl = $('<table></table>');
       tbl.appendTo($("#root"));
@@ -768,7 +904,8 @@
         y: 0
       };
       this.view(0);
-      return this.undo_data = [];
+      this.undo_data = [];
+      return this.state = 'ready';
     };
 
     return Reversi2;
