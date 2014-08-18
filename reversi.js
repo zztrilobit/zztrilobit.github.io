@@ -346,7 +346,20 @@
   MinMaxAlg = (function() {
     function MinMaxAlg(depth) {
       this.depth = depth;
+      this.boards = [];
     }
+
+    MinMaxAlg.prototype.newBoard = function(fs) {
+      if (this.boards.length > 0) {
+        return this.boards.pop();
+      } else {
+        return new ReversiBoard(fs);
+      }
+    };
+
+    MinMaxAlg.prototype.reuse_board = function(b) {
+      return this.boards.push(b);
+    };
 
     MinMaxAlg.prototype.rate = function(board, side) {
       var fs, i, j, opp, res, _i, _j, _ref, _ref1;
@@ -389,8 +402,8 @@
       if (board.gameOver()) {
         return board.score_side(side);
       }
-      b = new ReversiBoard(board.field_size);
-      b2 = new ReversiBoard(board.field_size);
+      b = this.newBoard(board.field_size);
+      b2 = this.newBoard(board.field_size);
       res = -1000;
       _ref = board.possibleMoves(side);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -421,6 +434,8 @@
           res = curr_rate;
         }
       }
+      this.reuse_board(b);
+      this.reuse_board(b2);
       return res;
     };
 
@@ -429,8 +444,8 @@
       this.cnt = 0;
       opp = side === 1 ? 2 : 1;
       pm = board.possibleMoves(side);
-      b = new ReversiBoard(board.field_size);
-      b2 = new ReversiBoard(board.field_size);
+      b = this.newBoard(board.field_size);
+      b2 = this.newBoard(board.field_size);
       minrate = 1000;
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m = pm[_i];
@@ -457,6 +472,8 @@
           tmp.push(m);
         }
       }
+      this.reuse_board(b);
+      this.reuse_board(b2);
       return tmp;
     };
 
@@ -671,12 +688,16 @@
     };
 
     Reversi2.prototype.onCellClick = function(i, j) {
-      var done, flips, myMove, r;
+      var done, flips, myMove, r, si;
       if (this.state === 'busy') {
         alert('Я еще думаю');
         return;
       }
-      this.undo_data.push(this.rb.clone());
+      si = {
+        board: this.rb.clone(),
+        depth: this.alg.depth
+      };
+      this.undo_data.push(si);
       flips = this.rb.getFlips(i, j, 1);
       if (flips.length > 0) {
         this.rb.setState(i, j, 1);
@@ -717,7 +738,7 @@
       }
       this.draw();
       this.state = 'ready';
-      this.span_state.html('Просмотрено ' + this.alg.cnt + ' позиций');
+      this.span_state.html('Просмотрено ' + this.alg.cnt + ' позиций глубина ' + this.alg.depth);
       if (this.rb.gameOver()) {
         alert("Game over!");
       }
@@ -726,13 +747,13 @@
     Reversi2.prototype.findAnyMove = function(side) {
       var res;
       res = this.alg.findAnyMove(this.rb, side);
-      if (this.alg.cnt > 70000) {
+      if (this.alg.cnt > 30000) {
         if (this.alg.depth > 0) {
           this.alg.depth--;
         }
       }
       if (this.alg.cnt < 1000) {
-        if (this.alg.depth > 0) {
+        if (this.alg.depth < 5) {
           this.alg.depth++;
         }
       }
@@ -750,16 +771,27 @@
       var uu;
       if (this.undo_data.length > 0) {
         uu = this.undo_data.pop();
-        uu.fill(this.rb);
+        uu.board.fill(this.rb);
+        this.alg.depth = uu.depth;
         return this.draw();
       }
+    };
+
+    Reversi2.prototype.deftag = function(side) {
+      if (side === 1) {
+        return '<b>X</b>';
+      }
+      if (side === 2) {
+        return '<b>O</b>';
+      }
+      return '';
     };
 
     Reversi2.prototype.view = function(mode) {
       this.mode = mode;
       if (mode === 0) {
-        this.xtag = '<b>X</b>';
-        this.otag = '<b>O</b>';
+        this.xtag = this.deftag(1);
+        this.otag = this.deftag(2);
       }
       if (mode === 1) {
         this.xtag = '<b>#</b>';
@@ -790,12 +822,12 @@
         }
       }
       if (this.undo_data.length > 0) {
-        this.field[this.last_x.y][this.last_x.x].html('<b>X</b>');
+        this.field[this.last_x.y][this.last_x.x].html(this.deftag(this.rb.field[this.last_x.y][this.last_x.x]));
         _ref2 = this.last_o;
         _results = [];
         for (_k = 0, _len = _ref2.length; _k < _len; _k++) {
           t = _ref2[_k];
-          _results.push(this.field[t.y][t.x].html('<b>O</b>'));
+          _results.push(this.field[t.y][t.x].html(this.deftag(this.rb.field[t.y][t.x])));
         }
         return _results;
       }
@@ -905,6 +937,7 @@
       };
       this.view(0);
       this.undo_data = [];
+      this.alg.depth = 2;
       return this.state = 'ready';
     };
 

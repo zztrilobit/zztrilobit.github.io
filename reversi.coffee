@@ -186,6 +186,17 @@ getRandomM= (a)->
 class MinMaxAlg
     constructor: (depth) ->
         @depth=depth
+        @boards=[]
+        
+    newBoard: (fs) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return new ReversiBoard(fs)
+            
+    reuse_board: (b) ->
+        @boards.push(b)
+        
         
     rate:(board,side) ->
         opp= if side==1 then 2 else 1
@@ -216,8 +227,8 @@ class MinMaxAlg
         
         if board.gameOver() then return board.score_side(side)
         
-        b = new ReversiBoard(board.field_size)
-        b2 = new ReversiBoard(board.field_size)
+        b = @newBoard(board.field_size)
+        b2 = @newBoard(board.field_size)
         res=-1000
         for m in board.possibleMoves(side)
             board.fill(b)
@@ -238,14 +249,16 @@ class MinMaxAlg
                     r=rr if rr<r
                 curr_rate=r
             res=curr_rate if curr_rate>res
+        @reuse_board(b)
+        @reuse_board(b2)
         return res
             
     bestMoves: (board,side) ->
         @cnt=0
         opp= if side==1 then 2 else 1
         pm=board.possibleMoves(side)
-        b = new ReversiBoard(board.field_size)
-        b2 = new ReversiBoard(board.field_size)
+        b = @newBoard(board.field_size)
+        b2 = @newBoard(board.field_size)
         minrate=1000
         for m in pm
             board.fill(b)
@@ -268,6 +281,8 @@ class MinMaxAlg
             if m.rate==minrate
                 tmp.push(m)
         #alert "----->"+ @cnt
+        @reuse_board(b)
+        @reuse_board(b2)
         return tmp
         
         
@@ -424,7 +439,10 @@ class Reversi2
             alert 'Я еще думаю'
             return
         
-        @undo_data.push(@rb.clone())
+        #сохраним глубину поиска
+        si=(board:@rb.clone(),depth:@alg.depth);
+                
+        @undo_data.push(si)
         flips = @rb.getFlips(i,j,1)
         if flips.length>0
             @rb.setState(i,j,1)
@@ -457,16 +475,16 @@ class Reversi2
                 done=(r.flips.length == 0)
         @draw()
         @state='ready'
-        @span_state.html('Просмотрено '+@alg.cnt+' позиций')
+        @span_state.html('Просмотрено '+@alg.cnt+' позиций глубина '+@alg.depth)
         alert("Game over!") if @rb.gameOver()        
         return
 
     findAnyMove: (side) ->
         res=@alg.findAnyMove(@rb,side)
-        if @alg.cnt>70000 
+        if @alg.cnt>30000 
             if @alg.depth>0 then @alg.depth-- 
         if @alg.cnt<1000 
-            if @alg.depth>0 then @alg.depth++ 
+            if @alg.depth<5 then @alg.depth++ 
         return res
 
     calc: () ->
@@ -477,13 +495,20 @@ class Reversi2
     doUndo: () ->
         if @undo_data.length>0
             uu=@undo_data.pop()
-            uu.fill(@rb)
+            uu.board.fill(@rb)
+            @alg.depth=uu.depth
             @draw()
+    
+    deftag: (side)->
+        if side==1 then return '<b>X</b>'
+        if side==2 then return '<b>O</b>'
+        return ''
+        
     view: (mode) ->
         @mode=mode
         if mode==0 
-            @xtag='<b>X</b>'
-            @otag='<b>O</b>'
+            @xtag=@deftag(1)
+            @otag=@deftag(2)
         if mode==1
             @xtag='<b>#</b>'
             @otag='<b>#</b>'        
@@ -503,9 +528,10 @@ class Reversi2
         
         #последний ход всегда показываем            
         if @undo_data.length>0
-            @field[@last_x.y][@last_x.x].html('<b>X</b>')
+            @field[@last_x.y][@last_x.x].html(@deftag(@rb.field[@last_x.y][@last_x.x]))
+                
             for t in @last_o
-                @field[t.y][t.x].html('<b>O</b>')
+                @field[t.y][t.x].html(@deftag(@rb.field[t.y][t.x]))
         
     init: () -> 
         ctrldiv=$('<div></div>')
@@ -588,6 +614,7 @@ class Reversi2
         @last_x=(x:0,y:0)
         @view(0)
         @undo_data=[]
+        @alg.depth=2
         @state='ready'
 reversi= new Reversi2
 window.g_reversi = reversi
