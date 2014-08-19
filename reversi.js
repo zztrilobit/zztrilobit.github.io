@@ -805,7 +805,7 @@
     };
 
     Reversi2.prototype.draw = function() {
-      var i, j, t, _i, _j, _k, _len, _ref, _ref1, _ref2, _results;
+      var i, j, pm, t, _i, _j, _k, _l, _len, _len1, _ref, _ref1, _ref2, _ref3, _results;
       this.calc();
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
@@ -824,13 +824,18 @@
       if (this.undo_data.length > 0) {
         this.field[this.last_x.y][this.last_x.x].html(this.deftag(this.rb.field[this.last_x.y][this.last_x.x]));
         _ref2 = this.last_o;
-        _results = [];
         for (_k = 0, _len = _ref2.length; _k < _len; _k++) {
           t = _ref2[_k];
-          _results.push(this.field[t.y][t.x].html(this.deftag(this.rb.field[t.y][t.x])));
+          this.field[t.y][t.x].html(this.deftag(this.rb.field[t.y][t.x]));
         }
-        return _results;
       }
+      _ref3 = this.rb.possibleMoves(1);
+      _results = [];
+      for (_l = 0, _len1 = _ref3.length; _l < _len1; _l++) {
+        pm = _ref3[_l];
+        _results.push(this.field[pm.y][pm.x].html('?'));
+      }
+      return _results;
     };
 
     Reversi2.prototype.init = function() {

@@ -533,6 +533,8 @@ class Reversi2
             for t in @last_o
                 @field[t.y][t.x].html(@deftag(@rb.field[t.y][t.x]))
         
+        for pm in @rb.possibleMoves(1)
+            @field[pm.y][pm.x].html('?')
     init: () -> 
         ctrldiv=$('<div></div>')
         
