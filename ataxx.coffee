@@ -296,15 +296,14 @@ class DisplayBoard
             if (!err) 
                 m = @board.construct_move(@from, ( y: i, x: j), 1)
                 @board.do_move(1, m)
+                if (!@board.game_over())    
+                    pm = @board.possible_moves(2)
+                    if (pm.length > 0) 
+                        #m= getRandomA(pm)
+                        m=@alg.find_move(2,@board,4)
+                        @board.do_move(2,m)
             else 
                 alert(err_msg)
-        
-            if (!@board.game_over())    
-                pm = @board.possible_moves(2)
-                if (pm.length > 0) 
-                    #m= getRandomA(pm)
-                    m=@alg.find_move(2,@board,4)
-                    @board.do_move(2,m)
                     
             @ready()
         @draw()
@@ -331,11 +330,24 @@ class Ataxx
         @board.init()
         @display_board.draw()
 
+    afterMove:() ->
+        @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt )
+        go=''
+        if @board.game_over()
+            if @board.count(1)==@board.count(2) then go='Ничья!'
+            if @board.count(1)>@board.count(2) then go='Победа X'
+            if @board.count(1)<@board.count(2) then go='Победа O'
+            
+        @game_info.html( 'Счет: X-' + @board.count(1) + ' O-'+ @board.count(2)+ ' ' + go)
+        
+        
     init: ()->
         @display_board = new DisplayBoard(@board)
-        @display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
+        @display_board.after_move = () => @afterMove()
         divctrl = $('<div></div>').appendTo($('#root'))
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
+        $('<p></p>').appendTo(divctrl)
+        @game_info = $('<span></span>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
         @display_board.tbl.appendTo($('#root'))

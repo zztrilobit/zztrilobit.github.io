@@ -456,15 +456,15 @@
             x: j
           }, 1);
           this.board.do_move(1, m);
+          if (!this.board.game_over()) {
+            pm = this.board.possible_moves(2);
+            if (pm.length > 0) {
+              m = this.alg.find_move(2, this.board, 4);
+              this.board.do_move(2, m);
+            }
+          }
         } else {
           alert(err_msg);
-        }
-        if (!this.board.game_over()) {
-          pm = this.board.possible_moves(2);
-          if (pm.length > 0) {
-            m = this.alg.find_move(2, this.board, 4);
-            this.board.do_move(2, m);
-          }
         }
         this.ready();
       }
@@ -518,16 +518,36 @@
       return this.display_board.draw();
     };
 
+    Ataxx.prototype.afterMove = function() {
+      var go;
+      this.span_info.html('Просмотрено позиций ' + this.display_board.alg.cnt);
+      go = '';
+      if (this.board.game_over()) {
+        if (this.board.count(1) === this.board.count(2)) {
+          go = 'Ничья!';
+        }
+        if (this.board.count(1) > this.board.count(2)) {
+          go = 'Победа X';
+        }
+        if (this.board.count(1) < this.board.count(2)) {
+          go = 'Победа O';
+        }
+      }
+      return this.game_info.html('Счет: X-' + this.board.count(1) + ' O-' + this.board.count(2) + ' ' + go);
+    };
+
     Ataxx.prototype.init = function() {
       var btnInit, divctrl;
       this.display_board = new DisplayBoard(this.board);
       this.display_board.after_move = (function(_this) {
         return function() {
-          return _this.span_info.html('Просмотрено позиций ' + _this.display_board.alg.cnt);
+          return _this.afterMove();
         };
       })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
+      $('<p></p>').appendTo(divctrl);
+      this.game_info = $('<span></span>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
       this.display_board.tbl.appendTo($('#root'));
