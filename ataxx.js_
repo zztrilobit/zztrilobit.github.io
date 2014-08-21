@@ -1,5 +1,5 @@
 ﻿(function() {
-  var Ataxx, AtaxxBoard, DisplayBoard, MiniMax, a, getRandomA, getRandomInt;
+  var Ataxx, AtaxxBoard, DisplayBoard, a, getRandomA, getRandomInt;
 
   getRandomInt = function(mn, mx) {
     return Math.floor(Math.random() * (mx - mn + 1)) + mn;
@@ -68,22 +68,30 @@
       return _results;
     };
 
-    function AtaxxBoard() {
-      var i, j, _i, _j;
+    function AtaxxBoard(inipos) {
+      var i, j, _i, _j, _len, _len1, _ref, _ref1;
       this.strt_pos();
       this.field_size = 7;
       this.field = (function() {
-        var _i, _results;
+        var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];
-        for (i = _i = 0; _i <= 7; i = ++_i) {
-          _results.push([0, 1, 2, 3, 4, 5, 6, 7]);
+        for (i = _i = 1, _ref = this.field_size + 1; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+          _results.push((function() {
+            _results1 = [];
+            for (var _j = 1, _ref1 = this.field_size + 1; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; 1 <= _ref1 ? _j++ : _j--){ _results1.push(_j); }
+            return _results1;
+          }).apply(this));
         }
         return _results;
-      })();
+      }).call(this);
       this.dirs = [];
-      for (i = _i = -1; _i <= 1; i = ++_i) {
-        for (j = _j = -1; _j <= 1; j = ++_j) {
-          if (i !== 0 && j !== 0) {
+      _ref = [-1, 0, 1];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        i = _ref[_i];
+        _ref1 = [-1, 0, 1];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          j = _ref1[_j];
+          if ((i !== 0) || (j !== 0)) {
             this.dirs.push({
               dx: i,
               dy: j
@@ -94,29 +102,12 @@
       this.init();
     }
 
-    AtaxxBoard.prototype.copy_to = function(b) {
-      var i, j, _i, _results;
-      _results = [];
-      for (i = _i = 1; _i <= 7; i = ++_i) {
-        _results.push((function() {
-          var _j, _results1;
-          _results1 = [];
-          for (j = _j = 1; _j <= 7; j = ++_j) {
-            _results1.push(b.field[i][j] = this.field[i][j]);
-          }
-          return _results1;
-        }).call(this));
-      }
-      return _results;
-    };
-
     AtaxxBoard.prototype.getState = function(i, j) {
       return this.field[i][j];
     };
 
     AtaxxBoard.prototype.empty_move = function() {
-      var res;
-      res = {
+      return {
         side: 0,
         from: {
           x: 0,
@@ -129,7 +120,6 @@
         type: '',
         flips: []
       };
-      return res;
     };
 
     AtaxxBoard.prototype.in_field = function(i, j) {
@@ -171,16 +161,18 @@
     };
 
     AtaxxBoard.prototype.do_move = function(side, m) {
-      var flip, _i, _len, _ref;
+      var flip, _i, _len, _ref, _results;
       this.field[m.to.y][m.to.x] = side;
       if (m.type === 'j') {
         this.field[m.from.y][m.from.x] = 0;
       }
       _ref = m.flips;
+      _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         flip = _ref[_i];
-        this.field[flip.y][flip.x] = side;
+        _results.push(this.field[flip.y][flip.x] = side);
       }
+      return _results;
     };
 
     AtaxxBoard.prototype.construct_move = function(from, to, side) {
@@ -202,19 +194,6 @@
       return m;
     };
 
-    AtaxxBoard.prototype.count = function(side) {
-      var i, j, res, _i, _j, _ref, _ref1;
-      res = 0;
-      for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          if (this.field[i][j] === side) {
-            res += 1;
-          }
-        }
-      }
-      return res;
-    };
-
     AtaxxBoard.prototype.game_over = function() {
       if (this.possible_moves(1).length > 0) {
         return 1 === 0;
@@ -226,13 +205,17 @@
     };
 
     AtaxxBoard.prototype.possible_moves = function(side) {
-      var di, dj, i, j, ni, nj, res, _i, _j, _k, _l;
+      var di, dj, i, j, ni, nj, res, _i, _j, _k, _l, _len, _len1, _ref, _ref1;
       res = [];
       for (i = _i = 1; _i <= 7; i = ++_i) {
         for (j = _j = 1; _j <= 7; j = ++_j) {
           if (this.field[i][j] === side) {
-            for (di = _k = -2; _k <= 2; di = ++_k) {
-              for (dj = _l = -2; _l <= 2; dj = ++_l) {
+            _ref = [-2, 2];
+            for (_k = 0, _len = _ref.length; _k < _len; _k++) {
+              di = _ref[_k];
+              _ref1 = [-2, 2];
+              for (_l = 0, _len1 = _ref1.length; _l < _len1; _l++) {
+                dj = _ref1[_l];
                 ni = i + di;
                 nj = j + dj;
                 if (this.is_empty(ni, nj) && ((di !== 0) || (dj !== 0))) {
@@ -256,107 +239,33 @@
 
   })();
 
-  MiniMax = (function() {
-    function MiniMax() {
-      this.inf_plus = 10000;
-      this.inf_minus = -10000;
-      this.cnt = 0;
-    }
-
-    MiniMax.prototype.opp = function(side) {
-      return 3 - side;
-    };
-
-    MiniMax.prototype.rate = function(board, side) {
-      var c, co;
-      this.cnt++;
-      c = board.count(side);
-      if (c === 0) {
-        return this.inf_minus;
-      }
-      co = board.count(3 - side);
-      if (co === 0) {
-        return this.inf_plus;
-      }
-      return c - co;
-    };
-
-    MiniMax.prototype.alfa_beta = function(side, board, level, round) {
-      var b, contra, done, m, my_best_rate, opposite, pm, r, t, _i, _j, _k, _len, _len1, _len2;
-      if (level === 0 || board.game_over()) {
-        return {
-          rate: this.rate(board, side)
-        };
-      }
-      pm = board.possible_moves(side);
-      b = new AtaxxBoard();
-      opposite = 3 - side;
-      my_best_rate = this.inf_minus;
-      done = 1 === 0;
-      for (_i = 0, _len = pm.length; _i < _len; _i++) {
-        m = pm[_i];
-        m.rate = this.inf_minus;
-      }
-      for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
-        m = pm[_j];
-        if (!done) {
-          board.copy_to(b);
-          b.do_move(side, m);
-          contra = this.alfa_beta(opposite, b, level - 1, -my_best_rate);
-          r = -contra.rate;
-          m.rate = r;
-          if (r >= my_best_rate) {
-            my_best_rate = r;
-          }
-          if (my_best_rate > round) {
-            done = 1 === 1;
-          }
-        }
-      }
-      t = [];
-      for (_k = 0, _len2 = pm.length; _k < _len2; _k++) {
-        m = pm[_k];
-        if (m.rate === my_best_rate) {
-          t.push(m);
-        }
-      }
-      return {
-        rate: my_best_rate,
-        move: getRandomA(t)
-      };
-    };
-
-    MiniMax.prototype.find_move = function(side, board, depth) {
-      this.cnt = 0;
-      return this.alfa_beta(side, board, depth, this.inf_plus).move;
-    };
-
-    return MiniMax;
-
-  })();
-
   DisplayBoard = (function() {
     function DisplayBoard(board) {
-      var cell, i, j, rnm, row, _i, _j, _k, _l, _m, _ref, _ref1, _ref2;
-      this.alg = new MiniMax();
-      this.xtag = '<b>X</b>';
-      this.otag = '<b>O</b>';
+      var cell, i, j, row, _i, _j, _k, _l, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      this.xtag = 'X';
+      this.otag = 'O';
       this.board = board;
       this.field_size = board.field_size;
       this.tbl = $('<table></table>');
       this.field = (function() {
-        var _i, _results;
+        var _i, _j, _ref, _ref1, _results, _results1;
         _results = [];
-        for (i = _i = 0; _i <= 7; i = ++_i) {
-          _results.push([0, 1, 2, 3, 4, 5, 6, 7]);
+        for (i = _i = 1, _ref = this.field_size + 1; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+          _results.push((function() {
+            _results1 = [];
+            for (var _j = 1, _ref1 = this.field_size + 1; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; 1 <= _ref1 ? _j++ : _j--){ _results1.push(_j); }
+            return _results1;
+          }).apply(this));
         }
         return _results;
-      })();
-      this.var_x = [];
-      this.after_move = 0;
+      }).call(this);
       this.dirs = [];
-      for (i = _i = -1; _i <= 1; i = ++_i) {
-        for (j = _j = -1; _j <= 1; j = ++_j) {
+      _ref = [-1, 0, 1];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        i = _ref[_i];
+        _ref1 = [-1, 0, 1];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          j = _ref1[_j];
           if ((i !== 0) || (j !== 0)) {
             this.dirs.push({
               dx: i,
@@ -366,11 +275,9 @@
         }
       }
       this.ready();
-      rnm = ['', 'g', 'f', 'e', 'd', 'c', 'b', 'a'];
-      for (i = _k = 1, _ref = this.field_size; 1 <= _ref ? _k <= _ref : _k >= _ref; i = 1 <= _ref ? ++_k : --_k) {
+      for (i = _k = 1, _ref2 = this.field_size; 1 <= _ref2 ? _k <= _ref2 : _k >= _ref2; i = 1 <= _ref2 ? ++_k : --_k) {
         row = $('<tr></tr>');
-        $('<td valign="middle" align="center" width=40 height=40>' + rnm[i] + '</td>').appendTo(row);
-        for (j = _l = 1, _ref1 = this.field_size; 1 <= _ref1 ? _l <= _ref1 : _l >= _ref1; j = 1 <= _ref1 ? ++_l : --_l) {
+        for (j = _l = 1, _ref3 = this.field_size; 1 <= _ref3 ? _l <= _ref3 : _l >= _ref3; j = 1 <= _ref3 ? ++_l : --_l) {
           cell = $('<td valign="middle" align="center" width=40 height=40></td>');
           cell.appendTo(row);
           this.field[i][j] = cell;
@@ -378,12 +285,6 @@
         }
         this.tbl.append(row);
       }
-      row = $('<tr></tr>');
-      $('<td valign="middle" align="center" width=40 height=40>' + '</td>').appendTo(row);
-      for (j = _m = 1, _ref2 = this.field_size; 1 <= _ref2 ? _m <= _ref2 : _m >= _ref2; j = 1 <= _ref2 ? ++_m : --_m) {
-        $('<td valign="middle" align="center" width=40 height=40>' + j + '</td>').appendTo(row);
-      }
-      this.tbl.append(row);
       this.draw();
     }
 
@@ -402,7 +303,7 @@
 
     DisplayBoard.prototype.clicker = function(i, j) {
       return (function(_this) {
-        return function() {
+        return function(event) {
           return _this.onCellClick(i, j);
         };
       })(this);
@@ -418,9 +319,9 @@
           this.var_x = [];
           for (dx = _i = -2; _i <= 2; dx = ++_i) {
             for (dy = _j = -2; _j <= 2; dy = ++_j) {
-              if (dx !== 0 || dy !== 0) {
-                nx = j + dx;
-                ny = i + dy;
+              if (dx !== 0 && dy !== 0) {
+                nx = i + d.dx;
+                ny = j + d.dy;
                 if (nx >= 1 && ny >= 1 && nx <= this.board.field_size && ny <= this.board.field_size) {
                   if (this.board.field[ny][nx] === 0) {
                     this.var_x.push({
@@ -462,34 +363,30 @@
         if (!this.board.game_over()) {
           pm = this.board.possible_moves(2);
           if (pm.length > 0) {
-            m = this.alg.find_move(2, this.board, 4);
-            this.board.do_move(2, m);
+            this.board.do_move(2, getRandomA(pm));
           }
         }
         this.ready();
-      }
-      this.draw();
-      if (this.after_move !== 0) {
-        return this.after_move();
+        return this.draw();
       }
     };
 
     DisplayBoard.prototype.draw = function() {
-      var i, j, s, v, _i, _j, _k, _len, _ref, _ref1, _ref2, _results;
+      var i, j, v, _i, _j, _k, _len, _ref, _ref1, _ref2, _results;
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          s = this.board.getState(i, j);
-          if (s === 0) {
-            this.field[i][j].html(' ');
-          }
-          if (s === 1) {
-            this.field[i][j].html(this.xtag);
-          }
-          if (s === 2) {
-            this.field[i][j].html(this.otag);
-          }
-          if (s === 3) {
-            this.field[i][j].html('#');
+          switch (this.board.getState(i, j)) {
+            case 0:
+              this.field[i][j].html(' ');
+              break;
+            case 1:
+              this.field[i][j].html(this.xtag);
+              break;
+            case 2:
+              this.field[i][j].html(this.otag);
+              break;
+            case 3:
+              this.field[i][j].html('*');
           }
         }
       }
@@ -521,21 +418,14 @@
     Ataxx.prototype.init = function() {
       var btnInit, divctrl;
       this.display_board = new DisplayBoard(this.board);
-      this.display_board.after_move = (function(_this) {
-        return function() {
-          return _this.span_info.html('Просмотрено позиций ' + _this.display_board.alg.cnt);
-        };
-      })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
-      $('<p></p>').appendTo(divctrl);
-      this.span_info = $('<span></span>').appendTo(divctrl);
-      this.display_board.tbl.appendTo($('#root'));
-      return btnInit.click((function(_this) {
+      btnInit.click((function(_this) {
         return function() {
           return _this.newGame();
         };
       })(this));
+      return this.display_board.tbl.appendTo($('#root'));
     };
 
     return Ataxx;

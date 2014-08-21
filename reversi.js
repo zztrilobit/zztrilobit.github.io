@@ -3,7 +3,7 @@
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
-      var i;
+      var i, j, _i, _j, _len, _len1, _ref, _ref1;
       this.field_size = fs;
       this.field = (function() {
         var _i, _j, _ref, _ref1, _results, _results1;
@@ -17,6 +17,18 @@
         }
         return _results;
       }).call(this);
+      this.dirs = [];
+      _ref = [-1, 0, 1];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        i = _ref[_i];
+        _ref1 = [-1, 0, 1];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          j = _ref1[_j];
+          if ((i !== 0) || (j !== 0)) {
+            this.dirs.push([i, j]);
+          }
+        }
+      }
       this.init();
     }
 
@@ -77,34 +89,24 @@
     };
 
     ReversiBoard.prototype.getFlips = function(y, x, p) {
-      var a2, dir, dirs, dx, dy, flip, flips, i, j, nx, ny, t, temp, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
+      var a2, dir, dx, dy, flip, flips, nx, ny, opp, t, temp, _i, _j, _len, _len1, _ref;
       if (this.field[y][x] !== 0) {
         return [];
       }
-      dirs = [];
+      opp = p === 1 ? 2 : 1;
       a2 = function(x, y) {
         return [x, y];
       };
       flips = [];
-      _ref = [-1, 0, 1];
+      _ref = this.dirs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        i = _ref[_i];
-        _ref1 = [-1, 0, 1];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          j = _ref1[_j];
-          if ((i !== 0) || (j !== 0)) {
-            dirs.push(a2(i, j));
-          }
-        }
-      }
-      for (_k = 0, _len2 = dirs.length; _k < _len2; _k++) {
-        dir = dirs[_k];
+        dir = _ref[_i];
         dy = dir[0];
         dx = dir[1];
         nx = x + dx;
         ny = y + dy;
         temp = [];
-        while ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx] !== 0) && (this.field[ny][nx] !== p)) {
+        while ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx] === opp)) {
           temp.push({
             y: ny,
             x: nx
@@ -113,8 +115,8 @@
           ny = ny + dy;
         }
         if ((nx >= 1) && (nx <= this.field_size) && (ny >= 1) && (ny <= this.field_size) && (this.field[ny][nx] === p)) {
-          for (_l = 0, _len3 = temp.length; _l < _len3; _l++) {
-            t = temp[_l];
+          for (_j = 0, _len1 = temp.length; _j < _len1; _j++) {
+            t = temp[_j];
             flip = {
               y: t.y,
               x: t.x
@@ -143,7 +145,7 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         flip = _ref[_i];
-        _results.push(this.roll(flip.y, flip.x));
+        _results.push(this.field[flip.y][flip.x] = side);
       }
       return _results;
     };

@@ -3,6 +3,11 @@ class ReversiBoard
     constructor: (fs)->
         @field_size = fs
         @field=([1..@field_size+1] for i in [1..@field_size+1])
+        @dirs=[]
+        for i in [-1,0,1]
+            for j in [-1,0,1]
+                if (i!=0) || (j!=0) then @dirs.push [i,j]
+
         @init()
     
     maxscore:() -> return @field_size*@field_size+20
@@ -38,17 +43,12 @@ class ReversiBoard
     getFlips: (y,x,p) ->
         if @field[y][x]!=0 
             return []
-        
-        dirs=[]
+        opp= if p==1 then 2 else 1
         a2= (x,y) -> return [x,y]
         flips=[]
-        
-        for i in [-1,0,1]
-            for j in [-1,0,1]
-                if (i!=0) || (j!=0) then dirs.push a2(i,j)
-        
+                
         #цикл по направлениям
-        for dir in dirs
+        for dir in @dirs
             dy=dir[0]
             dx=dir[1]
             nx=x+dx
@@ -56,7 +56,7 @@ class ReversiBoard
             
             #идем по направлению по своим фишкам
             temp=[]
-            while (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx]!=0) and (@field[ny][nx]!=p)
+            while (nx>=1) and (nx<=@field_size) and (ny>=1) and (ny<=@field_size) and (@field[ny][nx]==opp)
                 temp.push ((y:ny,x:nx))
                 nx=nx+dx
                 ny=ny+dy
@@ -74,8 +74,9 @@ class ReversiBoard
 
     do_move: (m,side) ->
         @field[m.y][m.x]=side
-        for flip in m.flips 
-            @roll(flip.y,flip.x)
+        for flip in m.flips
+            @field[flip.y][flip.x]=side
+            #@roll(flip.y,flip.x)
 
     score: () ->
         scoreX=0
@@ -171,7 +172,6 @@ class SimpleAlg
 
 
 getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
-
 getRandomA= (a)->return a[getRandomInt(0,a.length-1)]         
 
 getRandomM= (a)->
