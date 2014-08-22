@@ -459,7 +459,7 @@
           if (!this.board.game_over()) {
             pm = this.board.possible_moves(2);
             if (pm.length > 0) {
-              m = this.alg.find_move(2, this.board, 4);
+              m = this.alg.find_move(2, this.board, 5);
               this.board.do_move(2, m);
             }
           }

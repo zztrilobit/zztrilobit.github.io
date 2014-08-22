@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, MinMaxAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
+  var ConservAlg, ContrAlg, MinMaxAlg, MiniMaxABAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -345,6 +345,124 @@
     return res;
   };
 
+  MiniMaxABAlg = (function() {
+    function MiniMaxABAlg(depth) {
+      this.depth = depth;
+      this.inf_plus = 10000;
+      this.inf_minus = -10000;
+      this.cnt = 0;
+      this.boards = [];
+    }
+
+    MiniMaxABAlg.prototype.newBoard = function(fs) {
+      if (this.boards.length > 0) {
+        return this.boards.pop();
+      } else {
+        return new ReversiBoard(fs);
+      }
+    };
+
+    MiniMaxABAlg.prototype.reuse_board = function(b) {
+      return this.boards.push(b);
+    };
+
+    MiniMaxABAlg.prototype.opp = function(side) {
+      return 3 - side;
+    };
+
+    MiniMaxABAlg.prototype.rate = function(board, side) {
+      var fs, i, j, res, _i, _j, _ref, _ref1;
+      this.cnt++;
+      fs = board.field_size;
+      res = board.score_side(side);
+      if (!board.gameOver()) {
+        for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+            if (board.isCorner(i, j) && board.field[i][j] === side) {
+              res += 15;
+            }
+            if (board.isCorner(i, j) && board.field[i][j] === opp) {
+              res -= 15;
+            }
+            if (board.isPreCorner(i, j) && board.field[i][j] === side) {
+              res -= 15;
+            }
+            if (board.isPreCorner(i, j) && board.field[i][j] === opp) {
+              res += 15;
+            }
+          }
+        }
+        return res;
+      } else {
+        if (board.score_side(side) >= board.score_side(opp)) {
+          return this.inf_plus;
+        } else {
+          return this.inf_minus;
+        }
+      }
+    };
+
+    MiniMaxABAlg.prototype.alfa_beta = function(side, board, level, round) {
+      var b, contra, done, m, my_best_rate, opposite, pm, r, t, _i, _j, _k, _len, _len1, _len2;
+      if (level === 0 || board.gameOver()) {
+        return {
+          rate: this.rate(board, side)
+        };
+      }
+      pm = board.possibleMoves(side);
+      b = new ReversiBoard(board.field_size);
+      opposite = 3 - side;
+      my_best_rate = this.inf_minus;
+      done = 1 === 0;
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m = pm[_i];
+        m.rate = this.inf_minus;
+      }
+      for (_j = 0, _len1 = pm.length; _j < _len1; _j++) {
+        m = pm[_j];
+        if (!done) {
+          board.fill(b);
+          b.do_move(m, side);
+          contra = this.alfa_beta(opposite, b, level - 1, -my_best_rate);
+          r = -contra.rate;
+          m.rate = r;
+          if (r >= my_best_rate) {
+            my_best_rate = r;
+          }
+          if (my_best_rate > round) {
+            done = 1 === 1;
+          }
+        }
+      }
+      t = [];
+      for (_k = 0, _len2 = pm.length; _k < _len2; _k++) {
+        m = pm[_k];
+        if (m.rate === my_best_rate) {
+          t.push(m);
+        }
+      }
+      return {
+        rate: my_best_rate,
+        move: getRandomA(t),
+        all_moves: t
+      };
+    };
+
+    MiniMaxABAlg.prototype.bestMoves = function(board, side) {
+      var res;
+      this.cnt = 0;
+      res = (this.alfa_beta(side, board, this.depth, this.inf_plus)).all_moves;
+      return res;
+    };
+
+    MiniMaxABAlg.prototype.findAnyMove = function(board, side) {
+      return getRandomM(this.bestMoves(board, side));
+    };
+
+    return MiniMaxABAlg;
+
+  })();
+
   MinMaxAlg = (function() {
     function MinMaxAlg(depth) {
       this.depth = depth;
@@ -677,7 +795,7 @@
   Reversi2 = (function() {
     function Reversi2() {
       this.calg = new ConservAlg();
-      this.alg = new MinMaxAlg(2);
+      this.alg = new MiniMaxABAlg(4);
       this.undo_data = [];
     }
 
@@ -944,7 +1062,7 @@
       };
       this.view(0);
       this.undo_data = [];
-      this.alg.depth = 2;
+      this.alg.depth = 6;
       return this.state = 'ready';
     };
 

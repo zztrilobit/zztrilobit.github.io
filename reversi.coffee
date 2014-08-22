@@ -172,7 +172,6 @@ class SimpleAlg
 
 
 getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
-
 getRandomA= (a)->return a[getRandomInt(0,a.length-1)]         
 
 getRandomM= (a)->
@@ -184,6 +183,81 @@ getRandomM= (a)->
         res.not_found=(1==1)
     return res
 
+class MiniMaxABAlg
+    constructor:(depth) ->
+        @depth=depth
+        @inf_plus=10000
+        @inf_minus=-10000
+        @cnt=0
+        @boards=[]
+        
+    newBoard: (fs) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return new ReversiBoard(fs)
+            
+    reuse_board: (b) ->
+        @boards.push(b)
+    
+    opp:(side)->3-side
+    
+    rate: (board,side)->
+        @cnt++
+        fs=board.field_size
+        res=board.score_side(side)
+
+        if not board.gameOver()
+            for i in [1..@field_size] 
+                for j in [1..@field_size]
+                    if board.isCorner(i,j) and board.field[i][j]==side then res+=15
+                    if board.isCorner(i,j) and board.field[i][j]==opp then res-=15
+
+                    if board.isPreCorner(i,j) and board.field[i][j]==side then res-=15
+                    if board.isPreCorner(i,j) and board.field[i][j]==opp then res+=15        
+            return res
+        else 
+            if board.score_side(side)>=board.score_side(opp) 
+                return @inf_plus
+            else
+                return @inf_minus
+        
+    alfa_beta: (side, board, level, round) ->
+        if level==0 or board.gameOver()
+            return (rate: @rate(board,side))
+        pm=board.possibleMoves(side)
+        b=new ReversiBoard(board.field_size)
+        opposite=3-side
+        my_best_rate=@inf_minus
+        done=1==0
+        for m in pm
+            m.rate=@inf_minus
+        for m in pm
+            if not done
+                board.fill(b)
+                b.do_move(m,side)
+            
+                contra=@alfa_beta(opposite,b,level-1,-my_best_rate)
+                r=-contra.rate
+                m.rate=r
+                if r>=my_best_rate
+                    my_best_rate=r
+                if my_best_rate>round
+                    done=1==1
+        t=[]
+        for m in pm
+            if m.rate==my_best_rate then t.push(m)
+        
+        return (rate:my_best_rate,move:getRandomA(t),all_moves:t)
+
+    bestMoves:(board,side) ->
+        @cnt=0
+        res=(@alfa_beta(side, board, @depth, @inf_plus)).all_moves
+        return res
+
+    findAnyMove: (board,side) ->
+        return getRandomM(@bestMoves(board,side))
+        
 class MinMaxAlg
     constructor: (depth) ->
         @depth=depth
@@ -427,7 +501,7 @@ class Reversi2
     constructor:()->
         @calg=new ConservAlg()
         #@alg=new ContrAlg(@calg)
-        @alg=new MinMaxAlg(2)
+        @alg=new MiniMaxABAlg(4)
         @undo_data=[]
         #@alg=new MonteAlg(@calg)
         #@alg=new ConservAlg()
@@ -617,7 +691,7 @@ class Reversi2
         @last_x=(x:0,y:0)
         @view(0)
         @undo_data=[]
-        @alg.depth=2
+        @alg.depth=6
         @state='ready'
 reversi= new Reversi2
 window.g_reversi = reversi

@@ -300,7 +300,7 @@ class DisplayBoard
                     pm = @board.possible_moves(2)
                     if (pm.length > 0) 
                         #m= getRandomA(pm)
-                        m=@alg.find_move(2,@board,4)
+                        m=@alg.find_move(2,@board,5)
                         @board.do_move(2,m)
             else 
                 alert(err_msg)
