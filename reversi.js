@@ -371,24 +371,51 @@
     };
 
     MiniMaxABAlg.prototype.rate = function(board, side) {
-      var fs, i, j, res, _i, _j, _ref, _ref1;
+      var brd_rnd_rate, corn_rate, fs, i, ii, j, jj, res, _i, _j, _ref, _ref1;
       this.cnt++;
       fs = board.field_size;
       res = board.score_side(side);
       if (!board.gameOver()) {
+        corn_rate = 20;
+        brd_rnd_rate = 10;
         for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
           for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            if (board.isCorner(i, j) && board.field[i][j] === side) {
-              res += 15;
-            }
-            if (board.isCorner(i, j) && board.field[i][j] === opp) {
-              res -= 15;
-            }
-            if (board.isPreCorner(i, j) && board.field[i][j] === side) {
-              res -= 15;
-            }
-            if (board.isPreCorner(i, j) && board.field[i][j] === opp) {
-              res += 15;
+            if (board.isCorner(i, j)) {
+              if (board.field[i][j] === side) {
+                res += corn_rate;
+              }
+              if (board.field[i][j] === opp) {
+                res -= corn_rate;
+              }
+            } else {
+              if (board.isPreCorner(i, j)) {
+                if (i > board.field_size / 2) {
+                  ii = board.field_size;
+                } else {
+                  ii = 1;
+                }
+                if (j > board.field_size / 2) {
+                  jj = board.field_size;
+                } else {
+                  jj = 1;
+                }
+                if (board.field[i][j] === side) {
+                  if (board.field[ii][jj] === side) {
+                    res += brd_rnd_rate;
+                  } else {
+                    res -= corn_rate;
+                  }
+                }
+              } else {
+                if ((i === 1) || (j === 1) in (i === this.board.field_size) || (j === this.board.field_size)) {
+                  if (board.field[i][j] === side) {
+                    res += brd_rnd_rate;
+                  }
+                  if (board.field[i][j] === opp) {
+                    res -= brd_rnd_rate;
+                  }
+                }
+              }
             }
           }
         }

@@ -207,14 +207,27 @@ class MiniMaxABAlg
         fs=board.field_size
         res=board.score_side(side)
 
-        if not board.gameOver()
+        if not board.gameOver()            
+            corn_rate=20
+            brd_rnd_rate=10
             for i in [1..@field_size] 
                 for j in [1..@field_size]
-                    if board.isCorner(i,j) and board.field[i][j]==side then res+=15
-                    if board.isCorner(i,j) and board.field[i][j]==opp then res-=15
-
-                    if board.isPreCorner(i,j) and board.field[i][j]==side then res-=15
-                    if board.isPreCorner(i,j) and board.field[i][j]==opp then res+=15        
+                    if board.isCorner(i,j) 
+                        if board.field[i][j]==side then res+=corn_rate
+                        if board.field[i][j]==opp then res-=corn_rate
+                    else
+                        if board.isPreCorner(i,j) 
+                            if i>board.field_size/2 then ii=board.field_size else ii=1
+                            if j>board.field_size/2 then jj=board.field_size else jj=1
+                        
+                            if board.field[i][j]==side 
+                                if board.field[ii][jj]==side then res+=brd_rnd_rate else res-=corn_rate   
+                            #if board.field[i][j]==opp 
+                            #    if board.field[ii][jj]==opp then res-=brd_rnd_rate else res+=corn_rate
+                        else
+                            if (i==1) or (j==1) of (i==@board.field_size) or (j==@board.field_size)
+                                if board.field[i][j]==side then res+=brd_rnd_rate
+                                if board.field[i][j]==opp then res-=brd_rnd_rate
             return res
         else 
             if board.score_side(side)>=board.score_side(opp) 
