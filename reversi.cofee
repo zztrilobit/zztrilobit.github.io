@@ -438,9 +438,11 @@ class Reversi2
             r=@rb.possibleMoves(1)
             if r.length>0 
                 alert "Ход неверен, есть возможность правильного хода"
+                @state='ready'
                 return
         if @rb.gameOver()
-            alert("Game over!") 
+            alert("Game over!")
+            @state='ready'
             return        
         
         myMove=(1==1)

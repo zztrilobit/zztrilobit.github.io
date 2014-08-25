@@ -716,11 +716,13 @@
         r = this.rb.possibleMoves(1);
         if (r.length > 0) {
           alert("Ход неверен, есть возможность правильного хода");
+          this.state = 'ready';
           return;
         }
       }
       if (this.rb.gameOver()) {
         alert("Game over!");
+        this.state = 'ready';
         return;
       }
       myMove = 1 === 1;
