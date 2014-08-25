@@ -294,8 +294,8 @@ class MinMaxExAlg
         res=board.score_side(side)
 
         if not board.gameOver()            
-            corn_rate=30
-            brd_rnd_rate=15
+            corn_rate=40
+            brd_rnd_rate=20
             for i in [1..@field_size] 
                 for j in [1..@field_size]
                     if board.isCorner(i,j) 
@@ -311,7 +311,7 @@ class MinMaxExAlg
                             #if board.field[i][j]==opp 
                             #    if board.field[ii][jj]==opp then res-=brd_rnd_rate else res+=corn_rate
                         else
-                            if (i==1) or (j==1) of (i==@board.field_size) or (j==@board.field_size)
+                            if (i==1) or (j==1) or (i==@board.field_size) or (j==@board.field_size)
                                 if board.field[i][j]==side then res+=brd_rnd_rate
                                 if board.field[i][j]==opp then res-=brd_rnd_rate
             return res

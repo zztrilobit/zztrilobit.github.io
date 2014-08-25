@@ -516,8 +516,8 @@
       fs = board.field_size;
       res = board.score_side(side);
       if (!board.gameOver()) {
-        corn_rate = 30;
-        brd_rnd_rate = 15;
+        corn_rate = 40;
+        brd_rnd_rate = 20;
         for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
           for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
             if (board.isCorner(i, j)) {
@@ -547,7 +547,7 @@
                   }
                 }
               } else {
-                if ((i === 1) || (j === 1) in (i === this.board.field_size) || (j === this.board.field_size)) {
+                if ((i === 1) || (j === 1) || (i === this.board.field_size) || (j === this.board.field_size)) {
                   if (board.field[i][j] === side) {
                     res += brd_rnd_rate;
                   }
