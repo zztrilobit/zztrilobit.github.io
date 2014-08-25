@@ -270,7 +270,350 @@ class MiniMaxABAlg
 
     findAnyMove: (board,side) ->
         return getRandomM(@bestMoves(board,side))
+
+class MinMaxExAlg
+    constructor: (depth) ->
+        @depth=depth
+        @boards=[]
+        @inf_minus=-10000
+        @inf_plus=10000
         
+    newBoard: (fs) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return new ReversiBoard(fs)
+            
+    reuse_board: (b) ->
+        @boards.push(b)
+        
+        
+    rate: (board,side)->
+        @cnt++
+        fs=board.field_size
+        res=board.score_side(side)
+
+        if not board.gameOver()            
+            corn_rate=30
+            brd_rnd_rate=15
+            for i in [1..@field_size] 
+                for j in [1..@field_size]
+                    if board.isCorner(i,j) 
+                        if board.field[i][j]==side then res+=corn_rate
+                        if board.field[i][j]==opp then res-=corn_rate
+                    else
+                        if board.isPreCorner(i,j) 
+                            if i>board.field_size/2 then ii=board.field_size else ii=1
+                            if j>board.field_size/2 then jj=board.field_size else jj=1
+                        
+                            if board.field[i][j]==side 
+                                if board.field[ii][jj]==side then res+=brd_rnd_rate else res-=corn_rate   
+                            #if board.field[i][j]==opp 
+                            #    if board.field[ii][jj]==opp then res-=brd_rnd_rate else res+=corn_rate
+                        else
+                            if (i==1) or (j==1) of (i==@board.field_size) or (j==@board.field_size)
+                                if board.field[i][j]==side then res+=brd_rnd_rate
+                                if board.field[i][j]==opp then res-=brd_rnd_rate
+            return res
+        else 
+            if board.score_side(side)>=board.score_side(opp) 
+                return @inf_plus
+            else
+                return @inf_minus
+        
+   
+    rate_game_over:(board, side)->
+        opp=3-side
+        return if board.score_side(side)>=board.score_side(opp) then @inf_plus else @inf_minus
+            
+    #side - чья очередь ходить. он выбирает наилучший ход, минимизирующий сильный ответ оппонента
+    mx_mn: (board, side, depth) ->
+        @cnt++
+        opp= if side==1 then 2 else 1
+        res=(rate:0)
+        res.best_moves=[]
+        if board.gameOver()
+            res.rate=@rate_game_over(board,side)
+            return res
+            
+        if depth<=0
+            res=@rate(board,side)
+            return res
+            
+        b = @newBoard(board.field_size)
+        b2 = @newBoard(board.field_size)
+        res_rate=@inf_minus
+        best_moves=[]
+        pm0=board.possibleMoves(side)
+        corners=[]
+        vars=[]
+        for m0 in pm0
+            if board.isCorner(m0.x,m0.y)
+                corners.push(m0)
+            if not board.isPreCorner(m0.x,m0.y)
+                vars.push(m0)
+        # параноидальная углобоязнь
+        if corners.length>0 
+            z=corners #можешь поставить в угол -поставь
+        else 
+            # можешь не ставить рядом с углом - не ставь
+            if vars.length>0 then z=vars else z=pm0
+
+        #ф-ция для сортировки вариантов ходов по количеству переворотов
+        sf=(a,b)-> return b.flips.length-a.flips.length            
+
+        # а в остальном можно подумать
+        for m in z.sort(sf)
+            board.fill(b)
+            b.do_move(m,side)
+            
+            if b.gameOver() 
+                curr_rate=@rate_game_over(board,side)
+            else
+                if depth==1 
+                    curr_rate=@rate(board,side)
+                else
+                    # наихудший для нас ответ оппонента
+                    r=@inf_plus
+                    zz=b.possibleMoves(opp)
+                    for mopp in zz.sort(sf)
+                        if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
+                            b.fill(b2)
+                            b2.do_move(mopp,opp)
+                            rr=@mx_mn(b2,side,depth-2).rate
+                            r=rr if rr<r
+                    curr_rate=r
+            if curr_rate>res_rate
+                best_moves=[]
+                res_rate=curr_rate
+                
+            if curr_rate==res_rate
+                best_moves.push m
+        
+        res.rate=res_rate
+        res.moves=best_moves
+        
+        @reuse_board(b)
+        @reuse_board(b2)
+        return res
+            
+    bestMoves: (board,side) ->
+        @cnt=0
+        return @mx_mn(board,side,@depth).moves
+        
+        
+    findAnyMove: (board,side) ->
+        return getRandomM(@bestMoves(board,side))
+        
+    
+#==========================================================================
+class Reversi2
+    constructor:()->
+        #@alg=new ContrAlg(@calg)
+        #@alg=new MiniMaxABAlg(4)
+        @alg=new MinMaxExAlg(4)
+        @undo_data=[]
+        #@alg=new MonteAlg(@calg)
+        #@alg=new ConservAlg()
+        
+    clicker: (i,j) -> return (event) => @onCellClick(i,j)
+
+    
+    onCellClick: (i,j) ->
+        if @state=='busy'
+            alert 'Я еще думаю'
+            return
+        
+        #сохраним глубину поиска
+        si=(board:@rb.clone(),depth:@alg.depth);
+                
+        @undo_data.push(si)
+        flips = @rb.getFlips(i,j,1)
+        if flips.length>0
+            @rb.setState(i,j,1)
+            @rb.apply(flips)
+            
+            @last_x=(y:i,x:j)
+        else 
+            r=@rb.possibleMoves(1)
+            if r.length>0 
+                alert "Ход неверен, есть возможность правильного хода"
+                return
+        if @rb.gameOver()
+            alert("Game over!") 
+            return        
+        
+        myMove=(1==1)
+        
+        @draw()
+        r=@findAnyMove(2)
+        done=@rb.gameOver()
+        @last_o=[]
+        @state='busy'
+        @span_state.html('....Задумался....')
+        while myMove and (not done) 
+            if r.flips.length>0
+                @rb.setState(r.y,r.x,2)
+                @rb.apply(r.flips)
+                @last_o.push( (y:r.y, x:r.x) )
+                
+            if @rb.possibleMoves(1).length>0
+                myMove=(1==0)
+            else
+                r=@findAnyMove(2)
+                done=(r.flips.length == 0)
+        @draw()
+        @state='ready'
+        @span_state.html('Просмотрено '+@alg.cnt+' позиций глубина '+@alg.depth)
+        alert("Game over!") if @rb.gameOver()        
+        return
+
+    findAnyMove: (side) ->
+        res=@alg.findAnyMove(@rb,side)
+        if @alg.cnt>30000 
+            if @alg.depth>0 then @alg.depth-- 
+        if @alg.cnt<1000 
+            if @alg.depth<7 then @alg.depth++ 
+        return res
+
+    calc: () ->
+        s=@rb.score()
+        @spanX.html(s.sx)
+        @spanO.html(s.so)
+
+    doUndo: () ->
+        if @undo_data.length>0
+            uu=@undo_data.pop()
+            uu.board.fill(@rb)
+            @alg.depth=uu.depth
+            @draw()
+    
+    deftag: (side)->
+        if side==1 then return '<b>X</b>'
+        if side==2 then return '<b>O</b>'
+        return ''
+        
+    view: (mode) ->
+        @mode=mode
+        if mode==0 
+            @xtag=@deftag(1)
+            @otag=@deftag(2)
+        if mode==1
+            @xtag='<b>#</b>'
+            @otag='<b>#</b>'        
+        if mode==2
+            @xtag=' '
+            @otag=' '
+        @draw()
+        
+    draw: () ->
+        @calc()
+        for i in [1..@field_size] 
+            for j in [1..@field_size]
+                switch @rb.getState(i,j)
+                    when 0 then @field[i][j].html(' ')
+                    when 1 then @field[i][j].html(@xtag)
+                    when 2 then @field[i][j].html(@otag)
+        
+        #последний ход всегда показываем            
+        if @undo_data.length>0
+            @field[@last_x.y][@last_x.x].html(@deftag(@rb.field[@last_x.y][@last_x.x]))
+                
+            for t in @last_o
+                @field[t.y][t.x].html(@deftag(@rb.field[t.y][t.x]))
+        
+        for pm in @rb.possibleMoves(1)
+            @field[pm.y][pm.x].html('?')
+    init: () -> 
+        ctrldiv=$('<div></div>')
+        
+        btn_cons=$('<p>Компьютер ирает:</p>').appendTo(ctrldiv)
+        btn_greedy=$('<button>Минимаксом</button>').appendTo(ctrldiv)
+        btn_greedy.click ()=> @initField()
+        
+        #btn_cons=$('<button>Осторожно</button>').appendTo(ctrldiv)
+        #btn_cons.click ()=>@initFieldConserv()
+
+        #btn_cons2=$('<button>Оптимистично</button>').appendTo(ctrldiv)
+        #btn_cons2.click ()=>@initFieldConserv2()
+        
+        #btn_monte=$('<button>Загадочно</button>').appendTo(ctrldiv)
+        #btn_monte.click ()=>@initFieldMonte()
+        
+        $('<p></p>').appendTo(ctrldiv)
+        $('<span>X:</span>').appendTo(ctrldiv)
+        @spanX=$('<span></span>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        $('<span>O:</span>').appendTo(ctrldiv)
+        @spanO=$('<span></span>').appendTo(ctrldiv)
+        $('<p></p>').appendTo(ctrldiv)
+        
+        $('<p>Отображать доску:</p>').appendTo(ctrldiv)
+        btn_view_all=$('<button>Все</button>').appendTo(ctrldiv)
+        btn_view_all.click ()=> @view(0)
+        
+        btn_view_space=$('<button>Занятые</button>').appendTo(ctrldiv)
+        btn_view_space.click ()=> @view(1)
+
+        btn_view_none=$('<button>Ничего</button>').appendTo(ctrldiv)
+        btn_view_none.click ()=> @view(2)
+        
+        $('<p></p>').appendTo(ctrldiv)
+        btn_undo=$('<button>Отмена</button>').appendTo(ctrldiv)
+        btn_undo.click ()=> @doUndo()
+        
+        @span_state=$('<span></span>').appendTo(ctrldiv)
+        
+        ctrldiv.appendTo($("#root"))
+        tbl=$('<table></table>')
+        tbl.appendTo($("#root"))
+        @field_size = 8
+        @field=([1..@field_size+1] for i in [1..@field_size+1])
+        @rb=new ReversiBoard(@field_size)
+        for i in [1..@field_size] 
+            row=$('<tr></tr>')
+            for j in [1..@field_size]
+                cell=$('<td valign="middle" align="center" width=40 height=40></td>')
+                cell.appendTo(row)
+                @field[i][j]=cell
+                
+                cell.click @clicker(i,j)
+            tbl.append(row)
+        @initField()
+        
+    initFieldGreedy:()->
+        @alg=new SimpleAlg()
+        @initField()
+        
+    initFieldConserv:()->
+        @alg=new ConservAlg()
+        @initField()
+        
+    initFieldConserv2:()->
+        @calg=new ConservAlg()
+        @alg=new MonteAlg(@calg)
+        @initField()
+        
+    initFieldMonte:()->
+        @alg=new MonteAlg()
+        @initField()
+    
+
+    initField:()->
+        @rb.init()
+        @last_o=[]
+        @last_x=(x:0,y:0)
+        @view(0)
+        @undo_data=[]
+        @alg.depth=6
+        @state='ready'
+reversi= new Reversi2
+window.g_reversi = reversi
+
+$(document).ready () -> reversi.init()
+
+#========================================================================
+# старые алгоритмы
 class MinMaxAlg
     constructor: (depth) ->
         @depth=depth
@@ -508,205 +851,3 @@ class MonteAlg
         
     findAnyMove: (board,side) ->
         return getRandomM(@bestMoves(board,side))
-    
-#==========================================================================
-class Reversi2
-    constructor:()->
-        @calg=new ConservAlg()
-        #@alg=new ContrAlg(@calg)
-        @alg=new MiniMaxABAlg(4)
-        @undo_data=[]
-        #@alg=new MonteAlg(@calg)
-        #@alg=new ConservAlg()
-        
-    clicker: (i,j) -> return (event) => @onCellClick(i,j)
-
-    
-    onCellClick: (i,j) ->
-        if @state=='busy'
-            alert 'Я еще думаю'
-            return
-        
-        #сохраним глубину поиска
-        si=(board:@rb.clone(),depth:@alg.depth);
-                
-        @undo_data.push(si)
-        flips = @rb.getFlips(i,j,1)
-        if flips.length>0
-            @rb.setState(i,j,1)
-            @rb.apply(flips)
-            
-            @last_x=(y:i,x:j)
-        else 
-            r=@rb.possibleMoves(1)
-            if r.length>0 
-                alert "Ход неверен, есть возможность правильного хода"
-                return
-        myMove=(1==1)
-        
-        @draw()
-        r=@findAnyMove(2)
-        done=@rb.gameOver()
-        @last_o=[]
-        @state='busy'
-        @span_state.html('....Задумался....')
-        while myMove and (not done) 
-            if r.flips.length>0
-                @rb.setState(r.y,r.x,2)
-                @rb.apply(r.flips)
-                @last_o.push( (y:r.y, x:r.x) )
-                
-            if @rb.possibleMoves(1).length>0
-                myMove=(1==0)
-            else
-                r=@findAnyMove(2)
-                done=(r.flips.length == 0)
-        @draw()
-        @state='ready'
-        @span_state.html('Просмотрено '+@alg.cnt+' позиций глубина '+@alg.depth)
-        alert("Game over!") if @rb.gameOver()        
-        return
-
-    findAnyMove: (side) ->
-        res=@alg.findAnyMove(@rb,side)
-        if @alg.cnt>30000 
-            if @alg.depth>0 then @alg.depth-- 
-        if @alg.cnt<1000 
-            if @alg.depth<5 then @alg.depth++ 
-        return res
-
-    calc: () ->
-        s=@rb.score()
-        @spanX.html(s.sx)
-        @spanO.html(s.so)
-
-    doUndo: () ->
-        if @undo_data.length>0
-            uu=@undo_data.pop()
-            uu.board.fill(@rb)
-            @alg.depth=uu.depth
-            @draw()
-    
-    deftag: (side)->
-        if side==1 then return '<b>X</b>'
-        if side==2 then return '<b>O</b>'
-        return ''
-        
-    view: (mode) ->
-        @mode=mode
-        if mode==0 
-            @xtag=@deftag(1)
-            @otag=@deftag(2)
-        if mode==1
-            @xtag='<b>#</b>'
-            @otag='<b>#</b>'        
-        if mode==2
-            @xtag=' '
-            @otag=' '
-        @draw()
-        
-    draw: () ->
-        @calc()
-        for i in [1..@field_size] 
-            for j in [1..@field_size]
-                switch @rb.getState(i,j)
-                    when 0 then @field[i][j].html(' ')
-                    when 1 then @field[i][j].html(@xtag)
-                    when 2 then @field[i][j].html(@otag)
-        
-        #последний ход всегда показываем            
-        if @undo_data.length>0
-            @field[@last_x.y][@last_x.x].html(@deftag(@rb.field[@last_x.y][@last_x.x]))
-                
-            for t in @last_o
-                @field[t.y][t.x].html(@deftag(@rb.field[t.y][t.x]))
-        
-        for pm in @rb.possibleMoves(1)
-            @field[pm.y][pm.x].html('?')
-    init: () -> 
-        ctrldiv=$('<div></div>')
-        
-        btn_cons=$('<p>Компьютер ирает:</p>').appendTo(ctrldiv)
-        btn_greedy=$('<button>Минимаксом</button>').appendTo(ctrldiv)
-        btn_greedy.click ()=> @initField()
-        
-        #btn_cons=$('<button>Осторожно</button>').appendTo(ctrldiv)
-        #btn_cons.click ()=>@initFieldConserv()
-
-        #btn_cons2=$('<button>Оптимистично</button>').appendTo(ctrldiv)
-        #btn_cons2.click ()=>@initFieldConserv2()
-        
-        #btn_monte=$('<button>Загадочно</button>').appendTo(ctrldiv)
-        #btn_monte.click ()=>@initFieldMonte()
-        
-        $('<p></p>').appendTo(ctrldiv)
-        $('<span>X:</span>').appendTo(ctrldiv)
-        @spanX=$('<span></span>').appendTo(ctrldiv)
-        $('<p></p>').appendTo(ctrldiv)
-        $('<span>O:</span>').appendTo(ctrldiv)
-        @spanO=$('<span></span>').appendTo(ctrldiv)
-        $('<p></p>').appendTo(ctrldiv)
-        
-        $('<p>Отображать доску:</p>').appendTo(ctrldiv)
-        btn_view_all=$('<button>Все</button>').appendTo(ctrldiv)
-        btn_view_all.click ()=> @view(0)
-        
-        btn_view_space=$('<button>Занятые</button>').appendTo(ctrldiv)
-        btn_view_space.click ()=> @view(1)
-
-        btn_view_none=$('<button>Ничего</button>').appendTo(ctrldiv)
-        btn_view_none.click ()=> @view(2)
-        
-        $('<p></p>').appendTo(ctrldiv)
-        btn_undo=$('<button>Отмена</button>').appendTo(ctrldiv)
-        btn_undo.click ()=> @doUndo()
-        
-        @span_state=$('<span></span>').appendTo(ctrldiv)
-        
-        ctrldiv.appendTo($("#root"))
-        tbl=$('<table></table>')
-        tbl.appendTo($("#root"))
-        @field_size = 8
-        @field=([1..@field_size+1] for i in [1..@field_size+1])
-        @rb=new ReversiBoard(@field_size)
-        for i in [1..@field_size] 
-            row=$('<tr></tr>')
-            for j in [1..@field_size]
-                cell=$('<td valign="middle" align="center" width=40 height=40></td>')
-                cell.appendTo(row)
-                @field[i][j]=cell
-                
-                cell.click @clicker(i,j)
-            tbl.append(row)
-        @initField()
-        
-    initFieldGreedy:()->
-        @alg=new SimpleAlg()
-        @initField()
-        
-    initFieldConserv:()->
-        @alg=new ConservAlg()
-        @initField()
-        
-    initFieldConserv2:()->
-        @calg=new ConservAlg()
-        @alg=new MonteAlg(@calg)
-        @initField()
-        
-    initFieldMonte:()->
-        @alg=new MonteAlg()
-        @initField()
-    
-
-    initField:()->
-        @rb.init()
-        @last_o=[]
-        @last_x=(x:0,y:0)
-        @view(0)
-        @undo_data=[]
-        @alg.depth=6
-        @state='ready'
-reversi= new Reversi2
-window.g_reversi = reversi
-
-$(document).ready () -> reversi.init()
