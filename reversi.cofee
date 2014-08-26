@@ -271,22 +271,33 @@ class MiniMaxABAlg
     findAnyMove: (board,side) ->
         return getRandomM(@bestMoves(board,side))
 
-class MinMaxExAlg
-    constructor: (depth) ->
-        @depth=depth
-        @boards=[]
+class Heuristic
+    constructor:()->
         @inf_minus=-10000
         @inf_plus=10000
+    
+    sf: () -> return ( (a,b)-> return b.flips.length-a.flips.length )            
         
-    newBoard: (fs) ->
-        if @boards.length>0 
-            return @boards.pop()
-        else
-            return new ReversiBoard(fs)
-            
-    reuse_board: (b) ->
-        @boards.push(b)
-        
+    pre_filter:(board,side,pm)->
+        corners=[]
+        vars=[]
+        #углы
+        for m0 in pm
+            if board.isCorner(m0.x,m0.y)
+                corners.push(m0)
+            if not board.isPreCorner(m0.x,m0.y)
+                vars.push(m0)
+        # параноидальная углобоязнь
+        if corners.length>0 
+            z=corners #можешь поставить в угол -поставь
+        else 
+            # можешь не ставить рядом с углом - не ставь
+            if vars.length>0 then z=vars else z=pm
+
+        #ф-ция для сортировки вариантов ходов по количеству переворотов
+                    
+        z.sort(@sf())
+        return z;
         
     rate: (board,side)->
         @cnt++
@@ -315,80 +326,80 @@ class MinMaxExAlg
                                 if board.field[i][j]==side then res+=brd_rnd_rate
                                 if board.field[i][j]==opp then res-=brd_rnd_rate
             return res
-        else 
+        else
+            opp=3-side
             if board.score_side(side)>=board.score_side(opp) 
                 return @inf_plus
             else
                 return @inf_minus
         
-   
-    rate_game_over:(board, side)->
-        opp=3-side
-        return if board.score_side(side)>=board.score_side(opp) then @inf_plus else @inf_minus
+class MinMaxExAlg
+    constructor: (depth) ->
+        @heur=new Heuristic()
+        @depth=depth
+        @boards=[]
+        @inf_minus=@heur.inf_minus
+        @inf_plus=@heur.inf_plus
+        
+    newBoard: (fs) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return new ReversiBoard(fs)
             
+    reuse_board: (b) ->
+        @boards.push(b)
+        
+        
+                 
     #side - чья очередь ходить. он выбирает наилучший ход, минимизирующий сильный ответ оппонента
-    mx_mn: (board, side, depth) ->
+    mx_mn: (board, side, alpha, depth) ->
         @cnt++
         opp= if side==1 then 2 else 1
         res=(rate:0)
         res.best_moves=[]
-        if board.gameOver()
-            res.rate=@rate_game_over(board,side)
-            return res
-            
-        if depth<=0
-            res=@rate(board,side)
+      
+        if depth<=0 or board.gameOver()
+            res.rate=@heur.rate(board,side)
+            res.moves=[]
             return res
             
         b = @newBoard(board.field_size)
         b2 = @newBoard(board.field_size)
         res_rate=@inf_minus
         best_moves=[]
-        pm0=board.possibleMoves(side)
-        corners=[]
-        vars=[]
-        for m0 in pm0
-            if board.isCorner(m0.x,m0.y)
-                corners.push(m0)
-            if not board.isPreCorner(m0.x,m0.y)
-                vars.push(m0)
-        # параноидальная углобоязнь
-        if corners.length>0 
-            z=corners #можешь поставить в угол -поставь
-        else 
-            # можешь не ставить рядом с углом - не ставь
-            if vars.length>0 then z=vars else z=pm0
-
-        #ф-ция для сортировки вариантов ходов по количеству переворотов
+        
         sf=(a,b)-> return b.flips.length-a.flips.length            
-
+        z=@heur.pre_filter(board,side,board.possibleMoves(side))
+                
         # а в остальном можно подумать
-        for m in z.sort(sf)
-            board.fill(b)
-            b.do_move(m,side)
+        rez_rate=@inf_minus
+        for m in z
+            if rez_rate<alpha
+                board.fill(b)
+                b.do_move(m,side)
             
-            if b.gameOver() 
-                curr_rate=@rate_game_over(board,side)
-            else
-                if depth==1 
-                    curr_rate=@rate(board,side)
+                if b.gameOver() or depth==1
+                    curr_rate=@heur.rate(board,side)
                 else
                     # наихудший для нас ответ оппонента
                     r=@inf_plus
                     zz=b.possibleMoves(opp)
-                    for mopp in zz.sort(sf)
+                    for mopp in zz.sort(@heur.sf())
                         if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
                             b.fill(b2)
                             b2.do_move(mopp,opp)
-                            rr=@mx_mn(b2,side,depth-2).rate
+                            # если в следующей итерации встретим ветку больше тетущей, прекратим перебор
+                            rr=@mx_mn(b2,side,r,depth-2).rate
                             r=rr if rr<r
                     curr_rate=r
-            if curr_rate>res_rate
-                best_moves=[]
-                res_rate=curr_rate
+            
+                if curr_rate>res_rate
+                    best_moves=[]
+                    res_rate=curr_rate
                 
-            if curr_rate==res_rate
-                best_moves.push m
+                if curr_rate==res_rate
+                    best_moves.push m
         
         res.rate=res_rate
         res.moves=best_moves
@@ -399,7 +410,7 @@ class MinMaxExAlg
             
     bestMoves: (board,side) ->
         @cnt=0
-        return @mx_mn(board,side,@depth).moves
+        return @mx_mn(board,side,@inf_plus, @depth).moves
         
         
     findAnyMove: (board,side) ->
@@ -445,10 +456,13 @@ class Reversi2
             @state='ready'
             return        
         
-        myMove=(1==1)
-        
+               
         @draw()
-        r=@findAnyMove(2)
+        if @rb.possibleMoves(2).length>0
+            r=@findAnyMove(2)
+            myMove=(1==1)
+        else myMove=(1==0)
+        
         done=@rb.gameOver()
         @last_o=[]
         @state='busy'

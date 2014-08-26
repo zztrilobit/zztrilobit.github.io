@@ -1,5 +1,5 @@
 ﻿(function() {
-  var ConservAlg, ContrAlg, MinMaxAlg, MinMaxExAlg, MiniMaxABAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
+  var ConservAlg, ContrAlg, Heuristic, MinMaxAlg, MinMaxExAlg, MiniMaxABAlg, MonteAlg, RandomAlg, Reversi2, ReversiBoard, SimpleAlg, getRandomA, getRandomInt, getRandomM, reversi;
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
@@ -490,28 +490,46 @@
 
   })();
 
-  MinMaxExAlg = (function() {
-    function MinMaxExAlg(depth) {
-      this.depth = depth;
-      this.boards = [];
+  Heuristic = (function() {
+    function Heuristic() {
       this.inf_minus = -10000;
       this.inf_plus = 10000;
     }
 
-    MinMaxExAlg.prototype.newBoard = function(fs) {
-      if (this.boards.length > 0) {
-        return this.boards.pop();
-      } else {
-        return new ReversiBoard(fs);
+    Heuristic.prototype.sf = function() {
+      return (function(a, b) {
+        return b.flips.length - a.flips.length;
+      });
+    };
+
+    Heuristic.prototype.pre_filter = function(board, side, pm) {
+      var corners, m0, vars, z, _i, _len;
+      corners = [];
+      vars = [];
+      for (_i = 0, _len = pm.length; _i < _len; _i++) {
+        m0 = pm[_i];
+        if (board.isCorner(m0.x, m0.y)) {
+          corners.push(m0);
+        }
+        if (!board.isPreCorner(m0.x, m0.y)) {
+          vars.push(m0);
+        }
       }
+      if (corners.length > 0) {
+        z = corners;
+      } else {
+        if (vars.length > 0) {
+          z = vars;
+        } else {
+          z = pm;
+        }
+      }
+      z.sort(this.sf());
+      return z;
     };
 
-    MinMaxExAlg.prototype.reuse_board = function(b) {
-      return this.boards.push(b);
-    };
-
-    MinMaxExAlg.prototype.rate = function(board, side) {
-      var brd_rnd_rate, corn_rate, fs, i, ii, j, jj, res, _i, _j, _ref, _ref1;
+    Heuristic.prototype.rate = function(board, side) {
+      var brd_rnd_rate, corn_rate, fs, i, ii, j, jj, opp, res, _i, _j, _ref, _ref1;
       this.cnt++;
       fs = board.field_size;
       res = board.score_side(side);
@@ -561,6 +579,7 @@
         }
         return res;
       } else {
+        opp = 3 - side;
         if (board.score_side(side) >= board.score_side(opp)) {
           return this.inf_plus;
         } else {
@@ -569,80 +588,70 @@
       }
     };
 
-    MinMaxExAlg.prototype.rate_game_over = function(board, side) {
-      var opp;
-      opp = 3 - side;
-      if (board.score_side(side) >= board.score_side(opp)) {
-        return this.inf_plus;
+    return Heuristic;
+
+  })();
+
+  MinMaxExAlg = (function() {
+    function MinMaxExAlg(depth) {
+      this.heur = new Heuristic();
+      this.depth = depth;
+      this.boards = [];
+      this.inf_minus = this.heur.inf_minus;
+      this.inf_plus = this.heur.inf_plus;
+    }
+
+    MinMaxExAlg.prototype.newBoard = function(fs) {
+      if (this.boards.length > 0) {
+        return this.boards.pop();
       } else {
-        return this.inf_minus;
+        return new ReversiBoard(fs);
       }
     };
 
-    MinMaxExAlg.prototype.mx_mn = function(board, side, depth) {
-      var b, b2, best_moves, corners, curr_rate, m, m0, mopp, opp, pm0, r, res, res_rate, rr, sf, vars, z, zz, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+    MinMaxExAlg.prototype.reuse_board = function(b) {
+      return this.boards.push(b);
+    };
+
+    MinMaxExAlg.prototype.mx_mn = function(board, side, alpha, depth) {
+      var b, b2, best_moves, curr_rate, m, mopp, opp, r, res, res_rate, rez_rate, rr, sf, z, zz, _i, _j, _len, _len1, _ref;
       this.cnt++;
       opp = side === 1 ? 2 : 1;
       res = {
         rate: 0
       };
       res.best_moves = [];
-      if (board.gameOver()) {
-        res.rate = this.rate_game_over(board, side);
-        return res;
-      }
-      if (depth <= 0) {
-        res = this.rate(board, side);
+      if (depth <= 0 || board.gameOver()) {
+        res.rate = this.heur.rate(board, side);
+        res.moves = [];
         return res;
       }
       b = this.newBoard(board.field_size);
       b2 = this.newBoard(board.field_size);
       res_rate = this.inf_minus;
       best_moves = [];
-      pm0 = board.possibleMoves(side);
-      corners = [];
-      vars = [];
-      for (_i = 0, _len = pm0.length; _i < _len; _i++) {
-        m0 = pm0[_i];
-        if (board.isCorner(m0.x, m0.y)) {
-          corners.push(m0);
-        }
-        if (!board.isPreCorner(m0.x, m0.y)) {
-          vars.push(m0);
-        }
-      }
-      if (corners.length > 0) {
-        z = corners;
-      } else {
-        if (vars.length > 0) {
-          z = vars;
-        } else {
-          z = pm0;
-        }
-      }
       sf = function(a, b) {
         return b.flips.length - a.flips.length;
       };
-      _ref = z.sort(sf);
-      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-        m = _ref[_j];
-        board.fill(b);
-        b.do_move(m, side);
-        if (b.gameOver()) {
-          curr_rate = this.rate_game_over(board, side);
-        } else {
-          if (depth === 1) {
-            curr_rate = this.rate(board, side);
+      z = this.heur.pre_filter(board, side, board.possibleMoves(side));
+      rez_rate = this.inf_minus;
+      for (_i = 0, _len = z.length; _i < _len; _i++) {
+        m = z[_i];
+        if (rez_rate < alpha) {
+          board.fill(b);
+          b.do_move(m, side);
+          if (b.gameOver() || depth === 1) {
+            curr_rate = this.heur.rate(board, side);
           } else {
             r = this.inf_plus;
             zz = b.possibleMoves(opp);
-            _ref1 = zz.sort(sf);
-            for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
-              mopp = _ref1[_k];
+            _ref = zz.sort(this.heur.sf());
+            for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+              mopp = _ref[_j];
               if (r > res_rate) {
                 b.fill(b2);
                 b2.do_move(mopp, opp);
-                rr = this.mx_mn(b2, side, depth - 2).rate;
+                rr = this.mx_mn(b2, side, r, depth - 2).rate;
                 if (rr < r) {
                   r = rr;
                 }
@@ -650,13 +659,13 @@
             }
             curr_rate = r;
           }
-        }
-        if (curr_rate > res_rate) {
-          best_moves = [];
-          res_rate = curr_rate;
-        }
-        if (curr_rate === res_rate) {
-          best_moves.push(m);
+          if (curr_rate > res_rate) {
+            best_moves = [];
+            res_rate = curr_rate;
+          }
+          if (curr_rate === res_rate) {
+            best_moves.push(m);
+          }
         }
       }
       res.rate = res_rate;
@@ -668,7 +677,7 @@
 
     MinMaxExAlg.prototype.bestMoves = function(board, side) {
       this.cnt = 0;
-      return this.mx_mn(board, side, this.depth).moves;
+      return this.mx_mn(board, side, this.inf_plus, this.depth).moves;
     };
 
     MinMaxExAlg.prototype.findAnyMove = function(board, side) {
@@ -725,9 +734,13 @@
         this.state = 'ready';
         return;
       }
-      myMove = 1 === 1;
       this.draw();
-      r = this.findAnyMove(2);
+      if (this.rb.possibleMoves(2).length > 0) {
+        r = this.findAnyMove(2);
+        myMove = 1 === 1;
+      } else {
+        myMove = 1 === 0;
+      }
       done = this.rb.gameOver();
       this.last_o = [];
       this.state = 'busy';
