@@ -309,7 +309,7 @@ class DisplayBoard
 
 class Kalah 
     constructor: ()->
-        @board = new KalahBoard(6,3)
+        @board = new KalahBoard(8,6)
 
     newGame:()->
         @board.init()

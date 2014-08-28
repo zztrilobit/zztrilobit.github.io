@@ -439,7 +439,7 @@
 
   Kalah = (function() {
     function Kalah() {
-      this.board = new KalahBoard(6, 3);
+      this.board = new KalahBoard(8, 6);
     }
 
     Kalah.prototype.newGame = function() {
