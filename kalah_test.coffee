@@ -13,7 +13,8 @@ class KalahSide
         
         @ind= if side is 1 then (i)->i-1 else (i)->@cell_count-i
         @init()
-        
+    
+    
     init:()->
         @data=[]
         @man=0
@@ -33,7 +34,7 @@ class KalahSide
     fill:(b) ->  
         b.man=@man        
         for i in [1..@cell_count]
-            b.data[i-1]=@data[1]
+            b.data[i-1]=@data[i]
             
             
 class KalahBoard
@@ -43,6 +44,9 @@ class KalahBoard
         @field=[]
         @field[1]=new KalahSide(cell_count,seed_count,1)
         @field[2]=new KalahSide(cell_count,seed_count,2)
+    
+    template:()-> return new KalahBoard(@cell_count,0)
+    
     fill: (b)->
         @field[1].fill(b.field[1])
         @field[2].fill(b.field[2])
@@ -51,18 +55,23 @@ class KalahBoard
         @field[1].init()
         @field[2].init()
         
+    do_move:(m,side) ->
+        for z in m 
+            @move(side,z)
+            
     #делает ход. если он окончен - возвр истину, если нет - ложь
     move: (side,cell)->
         res={}
         n=@field[side].extract_cell(cell)
         next_point=cell+1
         curr_side=side
+        res=YES
         while n-- > 0
             done=NO
             if next_point==@cell_count+1
                 if curr_side==side
                     # пополняем свою копилку
-                    field[side].man++
+                    @field[side].man++
                     done=YES
                     res=NO
                 #переходим на другую сторону
@@ -70,10 +79,10 @@ class KalahBoard
                 next_point=1
             
             if not done and next_point<=@cell_count
-                @field[curr_side].inc_cell(next_point)
+                curr_cnt=@field[curr_side].inc_cell(next_point)
                 res=YES
                 if n==0 and side==curr_side
-                    if res.cnt>1 
+                    if curr_cnt>1 
                         #последний бросок в непустую лунку - продолжаем посев
                         n=@field[curr_side].extract_cell(next_point)
                     else
@@ -82,16 +91,26 @@ class KalahBoard
                         @field[side].man+=z
                 next_point++
         return res
+    
+    gameOver:()->
+        for i in [0..@cell_count-1]
+            if @field[1].data[i]>0 or @field[2].data[i]>0 then return NO
+        return YES
         
-    possible_moves:(side) ->
-        if @test_board is null then @test_board=new KalahBoard(@cell_count,@seed_count)
+    possibleMoves:(side) ->
+        return @possibleMoves_r(side,100) 
+
+    possibleMoves_r:(side,d) ->
+        if d<=0
+            alert '0'
+        if not @test_board? then @test_board=new KalahBoard(@cell_count,@seed_count)
         res=[]
         for i in [1..@cell_count]
             if @field[side].get_cell(i)>0
                 # по непустым лункам
                 @fill(@test_board)
-                if not @test_board.move(i)
-                    for m in @test_board.possible_moves(side)
+                if not @test_board.move(side,i)
+                    for m in @test_board.possibleMoves_r(side,d-1)
                         r=[i]
                         r.push(z) for z in m
                         res.push(r)
@@ -99,7 +118,7 @@ class KalahBoard
                     # ход окончен - добавим одношаговый
                     res.push([i])
         return res
-        
+           
 getRandomInt= (mn,mx)->return Math.floor(Math.random() * ( mx - mn + 1 )) + mn
 getRandomA= (a)->return a[getRandomInt(0,a.length-1)]         
 
@@ -111,9 +130,113 @@ getRandomM= (a)->
         res=(x:0,y:0,flips:[])
         res.not_found=(1==1)
     return res
-               
-class MiniMax
+
+class Heuristic
     constructor:()->
+        @inf_minus=-10000
+        @inf_plus=10000
+    
+    sf: () -> return ( (a,b)-> return 0 )            
+        
+    pre_filter:(board,side,pm)->
+        return pm;
+        
+    rate: (board,side)->
+
+        if not board.gameOver()
+            return board.field[side].man-board.field[3-side].man
+        else
+            s=board.field[side].man
+            o=board.field[3-side].man
+            for i in [0 .. board.cell_count-1]
+                s+=board.field[side].data[i]
+                o+=board.field[side].data[i]
+            return if s>=o then @inf_plus else @inf_minus
+    
+class MiniMax
+    constructor: (depth) ->
+        @heur=new Heuristic()
+        @depth=depth
+        @boards=[]
+        @inf_minus=@heur.inf_minus
+        @inf_plus=@heur.inf_plus
+        
+    newBoard: (t) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return t.template()
+            
+    reuse_board: (b) ->
+        @boards.push(b)
+        
+        
+                 
+    #side - чья очередь ходить. он выбирает наилучший ход, минимизирующий сильный ответ оппонента
+    mx_mn: (board, side, alpha, depth) ->
+        @cnt++
+        opp= if side==1 then 2 else 1
+        res=(rate:0)
+        res.best_moves=[]
+      
+        if depth<=0 or board.gameOver()
+            res.rate=@heur.rate(board,side)
+            res.moves=[]
+            return res
+            
+        b = @newBoard(board)
+        b2 = @newBoard(board)
+        res_rate=@inf_minus
+        best_moves=[]
+        
+        #sf=(a,b)-> return b.flips.length-a.flips.length            
+        z=@heur.pre_filter(board,side,board.possibleMoves(side))
+                
+        # а в остальном можно подумать
+        rez_rate=@inf_minus
+        for m in z
+            if rez_rate<alpha
+                board.fill(b)
+                b.do_move(m,side)
+            
+                if b.gameOver() or depth==1
+                    curr_rate=@heur.rate(board,side)
+                else
+                    # наихудший для нас ответ оппонента
+                    r=@inf_plus
+                    zz=b.possibleMoves(opp)
+                    for mopp in zz.sort(@heur.sf())
+                        if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
+                            b.fill(b2)
+                            b2.do_move(mopp,opp)
+                            # если в следующей итерации встретим ветку больше тетущей, прекратим перебор
+                            rr=@mx_mn(b2,side,r,depth-2).rate
+                            r=rr if rr<r
+                    curr_rate=r
+            
+                if curr_rate>res_rate
+                    best_moves=[]
+                    res_rate=curr_rate
+                
+                if curr_rate==res_rate
+                    best_moves.push m
+        
+        res.rate=res_rate
+        res.moves=best_moves
+        
+        @reuse_board(b)
+        @reuse_board(b2)
+        return res
+            
+    bestMoves: (board,side) ->
+        @cnt=0
+        return @mx_mn(board,side,@inf_plus, @depth).moves
+        
+        
+    findAnyMove: (board,side) ->
+        return getRandomM(@bestMoves(board,side))
+
+        
 class DisplayBoard
     constructor: (board)->
         @alg=new MiniMax()
@@ -121,9 +244,9 @@ class DisplayBoard
         @tbl = $('<table></table>')
         @cell_count=board.cell_count
         r1=$('<tr></tr>').appendTo(@tbl)
-        @nMan=$('<td></td>').appendTo(r1)
+        @nMan=$('<td width="60" valign="middle" align="center"></td>').appendTo(r1)
         fld=$('<td></td>').appendTo(r1)
-        @sMan=$('<td></td>').appendTo(r1)
+        @sMan=$('<td width="60" valign="middle" align="center"></td>').appendTo(r1)
         t2= $('<table></table>').appendTo(fld)
         rn=$('<tr></tr>').appendTo(t2)
         rs=$('<tr></tr>').appendTo(t2)
@@ -136,6 +259,7 @@ class DisplayBoard
             sCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs)
             @sFields.push (sCell)
             sCell.click(@clicker(i))
+            
         @draw()
         
     draw:()->
@@ -149,19 +273,21 @@ class DisplayBoard
     clicker: (i) -> return () => @onCellClick(i)
     
     onCellClick: (i) ->
-        if board.field[1].get_cell(i) is 0
+        if @board.field[1].get_cell(i) is 0
             alert "Пустая ячейка"
             return
         else
-            if board.move(1,i)
-                alert "Ход сделан"
-            else
+            if not @board.move(1,i)
                 alert "Ходите дальше!"
+                @draw()
                 return
-        m=@board.possible_moves(2)
+        @draw()
+        
+        m=@board.possibleMoves(2)
         if m.length>0 
-            board.move(2,z) for z in getRandomA(m)
-           
+            mm=@alg.findAnyMove @board,2
+            @board.do_move(mm,2)
+        @draw()        
 
 class Kalah 
     constructor: ()->
@@ -178,7 +304,8 @@ class Kalah
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
-        @display_board.tbl.appendTo($('#root'))
+        f=$('<font size="7"></font>').appendTo($('#root'))
+        @display_board.tbl.appendTo(f)
         btnInit.click( ()=>@newGame() )
         
     

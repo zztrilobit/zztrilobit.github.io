@@ -1,5 +1,5 @@
 ﻿(function() {
-  var DisplayBoard, Kalah, KalahBoard, KalahSide, MiniMax, NO, YES, a, getRandomA, getRandomInt, getRandomM;
+  var DisplayBoard, Heuristic, Kalah, KalahBoard, KalahSide, MiniMax, NO, YES, a, getRandomA, getRandomInt, getRandomM;
 
   NO = 1 === 0;
 
@@ -56,7 +56,7 @@
       b.man = this.man;
       _results = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push(b.data[i - 1] = this.data[1]);
+        _results.push(b.data[i - 1] = this.data[i]);
       }
       return _results;
     };
@@ -74,6 +74,10 @@
       this.field[2] = new KalahSide(cell_count, seed_count, 2);
     }
 
+    KalahBoard.prototype.template = function() {
+      return new KalahBoard(this.cell_count, 0);
+    };
+
     KalahBoard.prototype.fill = function(b) {
       this.field[1].fill(b.field[1]);
       return this.field[2].fill(b.field[2]);
@@ -84,17 +88,28 @@
       return this.field[2].init();
     };
 
+    KalahBoard.prototype.do_move = function(m, side) {
+      var z, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = m.length; _i < _len; _i++) {
+        z = m[_i];
+        _results.push(this.move(side, z));
+      }
+      return _results;
+    };
+
     KalahBoard.prototype.move = function(side, cell) {
-      var curr_side, done, n, next_point, res, z;
+      var curr_cnt, curr_side, done, n, next_point, res, z;
       res = {};
       n = this.field[side].extract_cell(cell);
       next_point = cell + 1;
       curr_side = side;
+      res = YES;
       while (n-- > 0) {
         done = NO;
         if (next_point === this.cell_count + 1) {
           if (curr_side === side) {
-            field[side].man++;
+            this.field[side].man++;
             done = YES;
             res = NO;
           }
@@ -102,10 +117,10 @@
           next_point = 1;
         }
         if (!done && next_point <= this.cell_count) {
-          this.field[curr_side].inc_cell(next_point);
+          curr_cnt = this.field[curr_side].inc_cell(next_point);
           res = YES;
           if (n === 0 && side === curr_side) {
-            if (res.cnt > 1) {
+            if (curr_cnt > 1) {
               n = this.field[curr_side].extract_cell(next_point);
             } else {
               z = this.field[3 - side].extract_cell(this.cell_count - next_point + 1);
@@ -118,17 +133,34 @@
       return res;
     };
 
-    KalahBoard.prototype.possible_moves = function(side) {
+    KalahBoard.prototype.gameOver = function() {
+      var i, _i, _ref;
+      for (i = _i = 0, _ref = this.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        if (this.field[1].data[i] > 0 || this.field[2].data[i] > 0) {
+          return NO;
+        }
+      }
+      return YES;
+    };
+
+    KalahBoard.prototype.possibleMoves = function(side) {
+      return this.possibleMoves_r(side, 100);
+    };
+
+    KalahBoard.prototype.possibleMoves_r = function(side, d) {
       var i, m, r, res, z, _i, _j, _k, _len, _len1, _ref, _ref1;
-      if (this.test_board === null) {
+      if (d <= 0) {
+        alert('0');
+      }
+      if (this.test_board == null) {
         this.test_board = new KalahBoard(this.cell_count, this.seed_count);
       }
       res = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         if (this.field[side].get_cell(i) > 0) {
           this.fill(this.test_board);
-          if (!this.test_board.move(i)) {
-            _ref1 = this.test_board.possible_moves(side);
+          if (!this.test_board.move(side, i)) {
+            _ref1 = this.test_board.possibleMoves_r(side, d - 1);
             for (_j = 0, _len = _ref1.length; _j < _len; _j++) {
               m = _ref1[_j];
               r = [i];
@@ -174,8 +206,133 @@
     return res;
   };
 
+  Heuristic = (function() {
+    function Heuristic() {
+      this.inf_minus = -10000;
+      this.inf_plus = 10000;
+    }
+
+    Heuristic.prototype.sf = function() {
+      return (function(a, b) {
+        return 0;
+      });
+    };
+
+    Heuristic.prototype.pre_filter = function(board, side, pm) {
+      return pm;
+    };
+
+    Heuristic.prototype.rate = function(board, side) {
+      var i, o, s, _i, _ref;
+      if (!board.gameOver()) {
+        return board.field[side].man - board.field[3 - side].man;
+      } else {
+        s = board.field[side].man;
+        o = board.field[3 - side].man;
+        for (i = _i = 0, _ref = board.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          s += board.field[side].data[i];
+          o += board.field[side].data[i];
+        }
+        if (s >= o) {
+          return this.inf_plus;
+        } else {
+          return this.inf_minus;
+        }
+      }
+    };
+
+    return Heuristic;
+
+  })();
+
   MiniMax = (function() {
-    function MiniMax() {}
+    function MiniMax(depth) {
+      this.heur = new Heuristic();
+      this.depth = depth;
+      this.boards = [];
+      this.inf_minus = this.heur.inf_minus;
+      this.inf_plus = this.heur.inf_plus;
+    }
+
+    MiniMax.prototype.newBoard = function(t) {
+      if (this.boards.length > 0) {
+        return this.boards.pop();
+      } else {
+        return t.template();
+      }
+    };
+
+    MiniMax.prototype.reuse_board = function(b) {
+      return this.boards.push(b);
+    };
+
+    MiniMax.prototype.mx_mn = function(board, side, alpha, depth) {
+      var b, b2, best_moves, curr_rate, m, mopp, opp, r, res, res_rate, rez_rate, rr, z, zz, _i, _j, _len, _len1, _ref;
+      this.cnt++;
+      opp = side === 1 ? 2 : 1;
+      res = {
+        rate: 0
+      };
+      res.best_moves = [];
+      if (depth <= 0 || board.gameOver()) {
+        res.rate = this.heur.rate(board, side);
+        res.moves = [];
+        return res;
+      }
+      b = this.newBoard(board);
+      b2 = this.newBoard(board);
+      res_rate = this.inf_minus;
+      best_moves = [];
+      z = this.heur.pre_filter(board, side, board.possibleMoves(side));
+      rez_rate = this.inf_minus;
+      for (_i = 0, _len = z.length; _i < _len; _i++) {
+        m = z[_i];
+        if (rez_rate < alpha) {
+          board.fill(b);
+          b.do_move(m, side);
+          if (b.gameOver() || depth === 1) {
+            curr_rate = this.heur.rate(board, side);
+          } else {
+            r = this.inf_plus;
+            zz = b.possibleMoves(opp);
+            _ref = zz.sort(this.heur.sf());
+            for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+              mopp = _ref[_j];
+              if (r > res_rate) {
+                b.fill(b2);
+                b2.do_move(mopp, opp);
+                rr = this.mx_mn(b2, side, r, depth - 2).rate;
+                if (rr < r) {
+                  r = rr;
+                }
+              }
+            }
+            curr_rate = r;
+          }
+          if (curr_rate > res_rate) {
+            best_moves = [];
+            res_rate = curr_rate;
+          }
+          if (curr_rate === res_rate) {
+            best_moves.push(m);
+          }
+        }
+      }
+      res.rate = res_rate;
+      res.moves = best_moves;
+      this.reuse_board(b);
+      this.reuse_board(b2);
+      return res;
+    };
+
+    MiniMax.prototype.bestMoves = function(board, side) {
+      this.cnt = 0;
+      return this.mx_mn(board, side, this.inf_plus, this.depth).moves;
+    };
+
+    MiniMax.prototype.findAnyMove = function(board, side) {
+      return getRandomM(this.bestMoves(board, side));
+    };
 
     return MiniMax;
 
@@ -189,9 +346,9 @@
       this.tbl = $('<table></table>');
       this.cell_count = board.cell_count;
       r1 = $('<tr></tr>').appendTo(this.tbl);
-      this.nMan = $('<td></td>').appendTo(r1);
+      this.nMan = $('<td width="60" valign="middle" align="center"></td>').appendTo(r1);
       fld = $('<td></td>').appendTo(r1);
-      this.sMan = $('<td></td>').appendTo(r1);
+      this.sMan = $('<td width="60" valign="middle" align="center"></td>').appendTo(r1);
       t2 = $('<table></table>').appendTo(fld);
       rn = $('<tr></tr>').appendTo(t2);
       rs = $('<tr></tr>').appendTo(t2);
@@ -228,28 +385,24 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var m, z, _i, _len, _ref, _results;
-      if (board.field[1].get_cell(i) === 0) {
+      var m, mm;
+      if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
         return;
       } else {
-        if (board.move(1, i)) {
-          alert("Ход сделан");
-        } else {
+        if (!this.board.move(1, i)) {
           alert("Ходите дальше!");
+          this.draw();
           return;
         }
       }
-      m = this.board.possible_moves(2);
+      this.draw();
+      m = this.board.possibleMoves(2);
       if (m.length > 0) {
-        _ref = getRandomA(m);
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          z = _ref[_i];
-          _results.push(board.move(2, z));
-        }
-        return _results;
+        mm = this.alg.findAnyMove(this.board, 2);
+        this.board.do_move(mm, 2);
       }
+      return this.draw();
     };
 
     return DisplayBoard;
@@ -267,13 +420,14 @@
     };
 
     Kalah.prototype.init = function() {
-      var btnInit, divctrl;
+      var btnInit, divctrl, f;
       this.display_board = new DisplayBoard(this.board);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
-      this.display_board.tbl.appendTo($('#root'));
+      f = $('<font size="7"></font>').appendTo($('#root'));
+      this.display_board.tbl.appendTo(f);
       return btnInit.click((function(_this) {
         return function() {
           return _this.newGame();
