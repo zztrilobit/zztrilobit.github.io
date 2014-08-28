@@ -355,9 +355,14 @@
   })();
 
   DisplayBoard = (function() {
-    function DisplayBoard(board) {
-      var fld, i, nCell, r1, rn, rs, sCell, t2, _i, _ref;
+    function DisplayBoard() {
       this.alg = new MiniMax(10);
+      this.nord_moves = [];
+      this.after_move = void 0;
+    }
+
+    DisplayBoard.prototype.set_board = function(board) {
+      var fld, i, nCell, r1, rn, rni, rs, rsi, sCell, t2, _i, _ref;
       this.board = board;
       this.tbl = $('<table></table>');
       this.cell_count = board.cell_count;
@@ -366,20 +371,23 @@
       fld = $('<td></td>').appendTo(r1);
       this.sMan = $('<td width="60" valign="middle" align="center"></td>').appendTo(r1);
       t2 = $('<table></table>').appendTo(fld);
+      rni = $('<tr></tr>').appendTo(t2);
       rn = $('<tr></tr>').appendTo(t2);
       rs = $('<tr></tr>').appendTo(t2);
+      rsi = $('<tr></tr>').appendTo(t2);
       this.nFields = [];
       this.sFields = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        $('<td valign="middle" align="center" width=60 height=30>' + (this.cell_count - i + 1) + '</td>').appendTo(rni);
         nCell = $('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rn);
         this.nFields.push(nCell);
         sCell = $('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs);
         this.sFields.push(sCell);
         sCell.click(this.clicker(i));
+        $('<td valign="middle" align="center" width=60 height=30>' + i + '</td>').appendTo(rsi);
       }
-      this.after_move = void 0;
-      this.draw();
-    }
+      return this.draw();
+    };
 
     DisplayBoard.prototype.draw = function() {
       var i, _i, _ref, _results;
@@ -402,7 +410,7 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var m, mess, mm;
+      var m, mess, mm, z, _i, _len;
       if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
         return;
@@ -423,6 +431,11 @@
       if (m.length > 0) {
         mm = this.alg.findAnyMove(this.board, 2);
         this.board.do_move(mm, 2);
+        this.nord_moves = [];
+        for (_i = 0, _len = mm.length; _i < _len; _i++) {
+          z = mm[_i];
+          this.nord_moves.push(z);
+        }
       }
       if (this.board.gameOver()) {
         alert("Game Over!");
@@ -442,28 +455,74 @@
       this.board = new KalahBoard(8, 6);
     }
 
-    Kalah.prototype.newGame = function() {
-      this.board.init();
+    Kalah.prototype.newGame = function(cell, seed) {
+      this.board = new KalahBoard(cell, seed);
+      this.display_board.set_board(this.board);
+      this.div_b.html(' ');
+      this.div_b.append(this.display_board.tbl);
       return this.display_board.draw();
     };
 
+    Kalah.prototype.html_sel = function() {
+      return $('<select><select>');
+    };
+
+    Kalah.prototype.html_opt = function(sel, key, val) {
+      return $('<option value="' + val + '">' + key + '</option>').appendTo(sel);
+    };
+
+    Kalah.prototype.html_table = function() {
+      return $('<table></table>');
+    };
+
+    Kalah.prototype.html_tr = function(tbl) {
+      return $('<tr></tr>').appendTo(tbl);
+    };
+
+    Kalah.prototype.html_td = function(tr) {
+      return $('<td></td>').appendTo(tr);
+    };
+
+    Kalah.prototype.html_opt = function(sel, key, val) {
+      return $('<option value="' + val + '">' + key + '</option>').appendTo(sel);
+    };
+
+    Kalah.prototype.info = function() {
+      return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt);
+    };
+
     Kalah.prototype.init = function() {
-      var btnInit, divctrl, f;
+      var btnInit, divctrl, f, r, t;
       this.display_board = new DisplayBoard(this.board);
       this.display_board.after_move = (function(_this) {
         return function() {
-          return _this.span_info.html('Просмотрено позиций ' + _this.display_board.alg.cnt);
+          return _this.info();
         };
       })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
+      t = this.html_table().appendTo(divctrl);
+      r = this.html_tr(t);
+      this.html_td(r).html('Лунок');
+      this.selCell = this.html_sel().appendTo(this.html_td(r));
+      this.html_opt(this.selCell, 4, 4);
+      this.html_opt(this.selCell, 6, 6);
+      this.html_opt(this.selCell, 8, 8);
+      r = this.html_tr(t);
+      this.html_td(r).html('Камней');
+      this.selSeed = this.html_sel().appendTo(this.html_td(r));
+      this.html_opt(this.selSeed, 3, 3);
+      this.html_opt(this.selSeed, 4, 4);
+      this.html_opt(this.selSeed, 5, 5);
+      this.html_opt(this.selSeed, 6, 6);
       this.span_info = $('<span></span>').appendTo(divctrl);
       f = $('<font size="7"></font>').appendTo($('#root'));
-      this.display_board.tbl.appendTo(f);
+      this.div_b = $('<div></div>').appendTo(f);
+      this.newGame(8, 6);
       return btnInit.click((function(_this) {
         return function() {
-          return _this.newGame();
+          return _this.newGame(parseInt(_this.selCell.val()), parseInt(_this.selSeed.val()));
         };
       })(this));
     };

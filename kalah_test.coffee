@@ -248,8 +248,12 @@ class MiniMax
 
         
 class DisplayBoard
-    constructor: (board)->
+    constructor: ()->
         @alg=new MiniMax(10)
+        @nord_moves=[]
+        @after_move=undefined        
+        
+    set_board: (board)->
         @board = board
         @tbl = $('<table></table>')
         @cell_count=board.cell_count
@@ -258,18 +262,21 @@ class DisplayBoard
         fld=$('<td></td>').appendTo(r1)
         @sMan=$('<td width="60" valign="middle" align="center"></td>').appendTo(r1)
         t2= $('<table></table>').appendTo(fld)
+        rni=$('<tr></tr>').appendTo(t2)
         rn=$('<tr></tr>').appendTo(t2)
         rs=$('<tr></tr>').appendTo(t2)
+        rsi=$('<tr></tr>').appendTo(t2)
         #ячейки для полей
         @nFields=[]
         @sFields=[]
         for i in [1..@cell_count]
+            $('<td valign="middle" align="center" width=60 height=30>' + (@cell_count-i+1) + '</td>').appendTo(rni)
             nCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rn)
             @nFields.push (nCell)
             sCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs)
             @sFields.push (sCell)
             sCell.click(@clicker(i))
-        @after_move=undefined        
+            $('<td valign="middle" align="center" width=60 height=30>' + (i) + '</td>').appendTo(rsi)
         @draw()
         
     draw:()->
@@ -301,6 +308,8 @@ class DisplayBoard
         if m.length>0 
             mm=@alg.findAnyMove @board,2
             @board.do_move(mm,2)
+            @nord_moves=[]
+            @nord_moves.push(z) for z in mm 
 
         if @board.gameOver()
             alert "Game Over!"
@@ -311,22 +320,69 @@ class Kalah
     constructor: ()->
         @board = new KalahBoard(8,6)
 
-    newGame:()->
-        @board.init()
+    newGame:(cell,seed)->
+        @board=new KalahBoard(cell,seed)
+        @display_board.set_board(@board)
+        @div_b.html(' ')
+        @div_b.append(@display_board.tbl)
         @display_board.draw()
 
+    html_sel:()->
+        $('<select><select>')
+        
+    html_opt:(sel,key,val)->
+        $('<option value="' + val+ '">'+key+'</option>').appendTo(sel)
+
+    html_table:()->
+        $('<table></table>')
+    html_tr:(tbl)->
+        $('<tr></tr>').appendTo(tbl)
+    html_td:(tr)->
+        $('<td></td>').appendTo(tr)
+        
+    html_opt:(sel,key,val)->
+        $('<option value="' + val+ '">'+key+'</option>').appendTo(sel)
+        
+    info:()->
+        
+        @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt ) 
+    
     init: ()->
         @display_board = new DisplayBoard(@board)
-        @display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
+        @display_board.after_move = () => @info() 
 
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
+        
+        t=@html_table().appendTo(divctrl)
+        r=@html_tr(t)
+        @html_td(r).html('Лунок')
+        
+        @selCell=@html_sel().appendTo(@html_td(r))
+        @html_opt(@selCell,4,4)
+        @html_opt(@selCell,6,6)
+        @html_opt(@selCell,8,8)
+        
+        r=@html_tr(t)
+
+        @html_td(r).html('Камней')
+        
+        @selSeed=@html_sel().appendTo(@html_td(r))
+        @html_opt(@selSeed,3,3)
+        @html_opt(@selSeed,4,4)
+        @html_opt(@selSeed,5,5)
+        @html_opt(@selSeed,6,6)
+        
+        
+        
         @span_info = $('<span></span>').appendTo(divctrl)
+        
         f=$('<font size="7"></font>').appendTo($('#root'))
-        @display_board.tbl.appendTo(f)
-        btnInit.click( ()=>@newGame() )
+        @div_b=$('<div></div>').appendTo(f)
+        @newGame(8,6)
+        btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val())) )
         
     
 
