@@ -58,7 +58,14 @@ class KalahBoard
     do_move:(m,side) ->
         for z in m 
             @move(side,z)
-            
+        @post_game_over()
+    
+    post_game_over: ()->
+        if @gameOver()
+            for i in [1..@cell_count]
+                @field[1].man+=@field[1].extract_cell(i)
+                @field[2].man+=@field[2].extract_cell(i)
+                
     #делает ход. если он окончен - возвр истину, если нет - ложь
     move: (side,cell)->
         res={}
@@ -93,9 +100,12 @@ class KalahBoard
         return res
     
     gameOver:()->
+        a1=YES
+        a2=YES
         for i in [0..@cell_count-1]
-            if @field[1].data[i]>0 or @field[2].data[i]>0 then return NO
-        return YES
+            if @field[1].data[i]>0 then a1=NO
+            if @field[2].data[i]>0 then a2=NO
+        return a1 or a2
         
     possibleMoves:(side) ->
         return @possibleMoves_r(side,100) 
@@ -259,7 +269,7 @@ class DisplayBoard
             sCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs)
             @sFields.push (sCell)
             sCell.click(@clicker(i))
-        @after_move=null    
+        @after_move=undefined        
         @draw()
         
     draw:()->
@@ -278,15 +288,22 @@ class DisplayBoard
             return
         else
             if not @board.move(1,i)
-                alert "Ходите дальше!"
+                mess= if @board.gameOver() then "Game Over!" else "Ходите дальше!"
+                alert mess
                 @draw()
                 return
-        @draw()
-        
+        if @board.gameOver()
+            alert "Game Over!"
+            @draw()
+            return
+            
         m=@board.possibleMoves(2)
         if m.length>0 
             mm=@alg.findAnyMove @board,2
             @board.do_move(mm,2)
+
+        if @board.gameOver()
+            alert "Game Over!"
         @after_move() if @after_move?
         @draw()        
 

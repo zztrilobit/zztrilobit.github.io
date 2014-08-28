@@ -89,13 +89,24 @@
     };
 
     KalahBoard.prototype.do_move = function(m, side) {
-      var z, _i, _len, _results;
-      _results = [];
+      var z, _i, _len;
       for (_i = 0, _len = m.length; _i < _len; _i++) {
         z = m[_i];
-        _results.push(this.move(side, z));
+        this.move(side, z);
       }
-      return _results;
+      return this.post_game_over();
+    };
+
+    KalahBoard.prototype.post_game_over = function() {
+      var i, _i, _ref, _results;
+      if (this.gameOver()) {
+        _results = [];
+        for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+          this.field[1].man += this.field[1].extract_cell(i);
+          _results.push(this.field[2].man += this.field[2].extract_cell(i));
+        }
+        return _results;
+      }
     };
 
     KalahBoard.prototype.move = function(side, cell) {
@@ -134,13 +145,18 @@
     };
 
     KalahBoard.prototype.gameOver = function() {
-      var i, _i, _ref;
+      var a1, a2, i, _i, _ref;
+      a1 = YES;
+      a2 = YES;
       for (i = _i = 0, _ref = this.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (this.field[1].data[i] > 0 || this.field[2].data[i] > 0) {
-          return NO;
+        if (this.field[1].data[i] > 0) {
+          a1 = NO;
+        }
+        if (this.field[2].data[i] > 0) {
+          a2 = NO;
         }
       }
-      return YES;
+      return a1 || a2;
     };
 
     KalahBoard.prototype.possibleMoves = function(side) {
@@ -361,7 +377,7 @@
         this.sFields.push(sCell);
         sCell.click(this.clicker(i));
       }
-      this.after_move = null;
+      this.after_move = void 0;
       this.draw();
     }
 
@@ -386,22 +402,30 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var m, mm;
+      var m, mess, mm;
       if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
         return;
       } else {
         if (!this.board.move(1, i)) {
-          alert("Ходите дальше!");
+          mess = this.board.gameOver() ? "Game Over!" : "Ходите дальше!";
+          alert(mess);
           this.draw();
           return;
         }
       }
-      this.draw();
+      if (this.board.gameOver()) {
+        alert("Game Over!");
+        this.draw();
+        return;
+      }
       m = this.board.possibleMoves(2);
       if (m.length > 0) {
         mm = this.alg.findAnyMove(this.board, 2);
         this.board.do_move(mm, 2);
+      }
+      if (this.board.gameOver()) {
+        alert("Game Over!");
       }
       if (this.after_move != null) {
         this.after_move();
