@@ -341,7 +341,7 @@
   DisplayBoard = (function() {
     function DisplayBoard(board) {
       var fld, i, nCell, r1, rn, rs, sCell, t2, _i, _ref;
-      this.alg = new MiniMax();
+      this.alg = new MiniMax(10);
       this.board = board;
       this.tbl = $('<table></table>');
       this.cell_count = board.cell_count;
@@ -361,6 +361,7 @@
         this.sFields.push(sCell);
         sCell.click(this.clicker(i));
       }
+      this.after_move = null;
       this.draw();
     }
 
@@ -402,6 +403,9 @@
         mm = this.alg.findAnyMove(this.board, 2);
         this.board.do_move(mm, 2);
       }
+      if (this.after_move != null) {
+        this.after_move();
+      }
       return this.draw();
     };
 
@@ -422,6 +426,11 @@
     Kalah.prototype.init = function() {
       var btnInit, divctrl, f;
       this.display_board = new DisplayBoard(this.board);
+      this.display_board.after_move = (function(_this) {
+        return function() {
+          return _this.span_info.html('Просмотрено позиций ' + _this.display_board.alg.cnt);
+        };
+      })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);

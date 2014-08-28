@@ -239,7 +239,7 @@ class MiniMax
         
 class DisplayBoard
     constructor: (board)->
-        @alg=new MiniMax()
+        @alg=new MiniMax(10)
         @board = board
         @tbl = $('<table></table>')
         @cell_count=board.cell_count
@@ -259,7 +259,7 @@ class DisplayBoard
             sCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs)
             @sFields.push (sCell)
             sCell.click(@clicker(i))
-            
+        @after_move=null    
         @draw()
         
     draw:()->
@@ -287,6 +287,7 @@ class DisplayBoard
         if m.length>0 
             mm=@alg.findAnyMove @board,2
             @board.do_move(mm,2)
+        @after_move() if @after_move?
         @draw()        
 
 class Kalah 
@@ -299,6 +300,8 @@ class Kalah
 
     init: ()->
         @display_board = new DisplayBoard(@board)
+        @display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
+
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
