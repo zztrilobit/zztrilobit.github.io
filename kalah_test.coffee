@@ -1,6 +1,17 @@
 NO=(1==0)
 YES=(1==1)
 
+class Utils
+    constructor:()->
+        @styleWOBord= 
+            "border-top": "none",
+            "border-bottom": "none",
+            "border-left": "none",
+            "border-right": "none",
+            "padding": "0px"
+
+    
+    
 class KalahSide
     constructor:(cell_count,seed_count,side)->
         @side=side
@@ -34,7 +45,7 @@ class KalahSide
     fill:(b) ->  
         b.man=@man        
         for i in [1..@cell_count]
-            b.data[i-1]=@data[i]
+            b.data[i-1]=@data[i-1]
             
             
 class KalahBoard
@@ -249,19 +260,32 @@ class MiniMax
         
 class DisplayBoard
     constructor: ()->
-        @alg=new MiniMax(10)
+        @u=new Utils()
+        @alg=new MiniMax(6)
         @nord_moves=[]
-        @after_move=undefined        
+        #будет ли доска реагировать на мышку
+        @enabled=YES
+        @after_move=undefined  
+        @log_hist=undefined  
         
     set_board: (board)->
-        @board = board
-        @tbl = $('<table></table>')
+        @board=board
+        @cell_count=board.cell_count
+        @tbl=$('<table></table>').css(@u.styleWOBord).css('cellspasing',5)
         @cell_count=board.cell_count
         r1=$('<tr></tr>').appendTo(@tbl)
-        @nMan=$('<td width="60" valign="middle" align="center"></td>').appendTo(r1)
-        fld=$('<td></td>').appendTo(r1)
-        @sMan=$('<td width="60" valign="middle" align="center"></td>').appendTo(r1)
-        t2= $('<table></table>').appendTo(fld)
+
+        styleMan=
+            valign:"middle",
+            "text-align":"center",
+            width:60,
+            "font-size":"xx-large",
+            "font-weight":"bold"
+
+        @nMan=$('<td></td>').appendTo(r1).css(styleMan)
+        fld=$('<td></td>').appendTo(r1).css(@u.styleWOBord)
+        @sMan=$('<td></td>').appendTo(r1).css(styleMan)
+        t2= $('<table></table>').css(@u.styleWOBord).css(("border-collapse":"collapse","border":"1")).appendTo(fld)
         rni=$('<tr></tr>').appendTo(t2)
         rn=$('<tr></tr>').appendTo(t2)
         rs=$('<tr></tr>').appendTo(t2)
@@ -269,14 +293,36 @@ class DisplayBoard
         #ячейки для полей
         @nFields=[]
         @sFields=[]
+        
+        styleHdr=
+            valign:"middle",
+            "text-align":"center",
+            width:60,
+            height:30
+        
+        styleBody=
+            valign:"middle",
+            "text-align":"center",
+            width:60,
+            height:60,
+            "font-size":"xx-large",
+            #"font-weight":"bold",
+            "border-top": "solid",
+            "border-bottom": "solid",
+            "border-left": "solid",
+            "border-right": "solid",
+            "border": "1px solid black",
+            "padding": "0px"
+
         for i in [1..@cell_count]
-            $('<td valign="middle" align="center" width=60 height=30>' + (@cell_count-i+1) + '</td>').appendTo(rni)
-            nCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rn)
+            $('<td >' + (@cell_count-i+1) + '</td>').css(styleHdr).appendTo(rni)
+            nCell=$('<td></td>').appendTo(rn).css(styleBody)
             @nFields.push (nCell)
-            sCell=$('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs)
+            sCell=$('<td></td>').appendTo(rs).css(styleBody)
             @sFields.push (sCell)
-            sCell.click(@clicker(i))
-            $('<td valign="middle" align="center" width=60 height=30>' + (i) + '</td>').appendTo(rsi)
+            
+            sCell.click(@clicker(i)) if @enabled
+            $('<td>' + (i) + '</td>').appendTo(rsi).css(styleHdr)
         @draw()
         
     draw:()->
@@ -290,6 +336,7 @@ class DisplayBoard
     clicker: (i) -> return () => @onCellClick(i)
     
     onCellClick: (i) ->
+        return if not @enabled
         if @board.field[1].get_cell(i) is 0
             alert "Пустая ячейка"
             return
@@ -298,18 +345,22 @@ class DisplayBoard
                 mess= if @board.gameOver() then "Game Over!" else "Ходите дальше!"
                 alert mess
                 @draw()
+                @log_hist("Ход юга: "+i) if @log_hist?
                 return
         if @board.gameOver()
             alert "Game Over!"
             @draw()
+            @log_hist("Ход юга-конец") if @log_hist?
             return
             
-        m=@board.possibleMoves(2)
-        if m.length>0 
-            mm=@alg.findAnyMove @board,2
-            @board.do_move(mm,2)
+        pm=@board.possibleMoves(2)
+        if pm.length>0 
+            moves=@alg.findAnyMove @board,2
+            for m in moves
+                @board.do_move([m],2)
+                @log_hist("Ход севера: "+m) if @log_hist?
             @nord_moves=[]
-            @nord_moves.push(z) for z in mm 
+            @nord_moves.push(z) for z in moves 
 
         if @board.gameOver()
             alert "Game Over!"
@@ -327,6 +378,7 @@ class Kalah
         @div_b.append(@display_board.tbl)
         @display_board.draw()
 
+        
     html_sel:()->
         $('<select><select>')
         
@@ -347,40 +399,63 @@ class Kalah
         
         @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt ) 
     
+    log_hist:(m)->
+        b=@board.template()
+        @board.fill(b)
+        @db2.set_board(b)
+        d=$ "<div></div>"
+        d.append("<p>"+m+"</p>") if m?
+        d.append(@db2.tbl)
+        @div_hist.prepend(d)
     init: ()->
         @display_board = new DisplayBoard(@board)
+        @display_board.log_hist=(m)=>@log_hist(m)
+        @db2 = new DisplayBoard(@board)
+        @db2.enabled=NO
+        
         @display_board.after_move = () => @info() 
 
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
+
+        styleWOBord= 
+            "border-top": "none",
+            "border-bottom": "none",
+            "border-left": "none",
+            "border-right": "none",
+            "padding": "0px"
+                       
         
-        t=@html_table().appendTo(divctrl)
+        t=@html_table().css(styleWOBord).appendTo(divctrl)
         r=@html_tr(t)
-        @html_td(r).html('Лунок')
+        @html_td(r).css(styleWOBord).html('Лунок')
         
-        @selCell=@html_sel().appendTo(@html_td(r))
+        @selCell=@html_sel().appendTo(@html_td(r).css(styleWOBord))
         @html_opt(@selCell,4,4)
         @html_opt(@selCell,6,6)
         @html_opt(@selCell,8,8)
         
         r=@html_tr(t)
 
-        @html_td(r).html('Камней')
+        @html_td(r).css(styleWOBord).html('Камней')
         
-        @selSeed=@html_sel().appendTo(@html_td(r))
+        @selSeed=@html_sel().appendTo(@html_td(r).css(styleWOBord))
         @html_opt(@selSeed,3,3)
         @html_opt(@selSeed,4,4)
         @html_opt(@selSeed,5,5)
         @html_opt(@selSeed,6,6)
         
         
-        
+        $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
         
         f=$('<font size="7"></font>').appendTo($('#root'))
         @div_b=$('<div></div>').appendTo(f)
+        @div_hist=$('<p></p>').appendTo($('#root'))
+        @div_hist=$('<p>История</p>').appendTo($('#root'))
+        @div_hist=$('<div></div>').appendTo($('#root'))
         @newGame(8,6)
         btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val())) )
         

@@ -1,9 +1,24 @@
 ﻿(function() {
-  var DisplayBoard, Heuristic, Kalah, KalahBoard, KalahSide, MiniMax, NO, YES, a, getRandomA, getRandomInt, getRandomM;
+  var DisplayBoard, Heuristic, Kalah, KalahBoard, KalahSide, MiniMax, NO, Utils, YES, a, getRandomA, getRandomInt, getRandomM;
 
   NO = 1 === 0;
 
   YES = 1 === 1;
+
+  Utils = (function() {
+    function Utils() {
+      this.styleWOBord = {
+        "border-top": "none",
+        "border-bottom": "none",
+        "border-left": "none",
+        "border-right": "none",
+        "padding": "0px"
+      };
+    }
+
+    return Utils;
+
+  })();
 
   KalahSide = (function() {
     function KalahSide(cell_count, seed_count, side) {
@@ -56,7 +71,7 @@
       b.man = this.man;
       _results = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push(b.data[i - 1] = this.data[i]);
+        _results.push(b.data[i - 1] = this.data[i - 1]);
       }
       return _results;
     };
@@ -356,35 +371,70 @@
 
   DisplayBoard = (function() {
     function DisplayBoard() {
-      this.alg = new MiniMax(10);
+      this.u = new Utils();
+      this.alg = new MiniMax(6);
       this.nord_moves = [];
+      this.enabled = YES;
       this.after_move = void 0;
+      this.log_hist = void 0;
     }
 
     DisplayBoard.prototype.set_board = function(board) {
-      var fld, i, nCell, r1, rn, rni, rs, rsi, sCell, t2, _i, _ref;
+      var fld, i, nCell, r1, rn, rni, rs, rsi, sCell, styleBody, styleHdr, styleMan, t2, _i, _ref;
       this.board = board;
-      this.tbl = $('<table></table>');
+      this.cell_count = board.cell_count;
+      this.tbl = $('<table></table>').css(this.u.styleWOBord).css('cellspasing', 5);
       this.cell_count = board.cell_count;
       r1 = $('<tr></tr>').appendTo(this.tbl);
-      this.nMan = $('<td width="60" valign="middle" align="center"></td>').appendTo(r1);
-      fld = $('<td></td>').appendTo(r1);
-      this.sMan = $('<td width="60" valign="middle" align="center"></td>').appendTo(r1);
-      t2 = $('<table></table>').appendTo(fld);
+      styleMan = {
+        valign: "middle",
+        "text-align": "center",
+        width: 60,
+        "font-size": "xx-large",
+        "font-weight": "bold"
+      };
+      this.nMan = $('<td></td>').appendTo(r1).css(styleMan);
+      fld = $('<td></td>').appendTo(r1).css(this.u.styleWOBord);
+      this.sMan = $('<td></td>').appendTo(r1).css(styleMan);
+      t2 = $('<table></table>').css(this.u.styleWOBord).css({
+        "border-collapse": "collapse",
+        "border": "1"
+      }).appendTo(fld);
       rni = $('<tr></tr>').appendTo(t2);
       rn = $('<tr></tr>').appendTo(t2);
       rs = $('<tr></tr>').appendTo(t2);
       rsi = $('<tr></tr>').appendTo(t2);
       this.nFields = [];
       this.sFields = [];
+      styleHdr = {
+        valign: "middle",
+        "text-align": "center",
+        width: 60,
+        height: 30
+      };
+      styleBody = {
+        valign: "middle",
+        "text-align": "center",
+        width: 60,
+        height: 60,
+        "font-size": "xx-large",
+        "border-top": "solid",
+        "border-bottom": "solid",
+        "border-left": "solid",
+        "border-right": "solid",
+        "border": "1px solid black",
+        "padding": "0px"
+      };
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        $('<td valign="middle" align="center" width=60 height=30>' + (this.cell_count - i + 1) + '</td>').appendTo(rni);
-        nCell = $('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rn);
+        $('<td >' + (this.cell_count - i + 1) + '</td>').css(styleHdr).appendTo(rni);
+        nCell = $('<td></td>').appendTo(rn).css(styleBody);
         this.nFields.push(nCell);
-        sCell = $('<td valign="middle" align="center" width=60 height=60></td>').appendTo(rs);
+        sCell = $('<td></td>').appendTo(rs).css(styleBody);
         this.sFields.push(sCell);
-        sCell.click(this.clicker(i));
-        $('<td valign="middle" align="center" width=60 height=30>' + i + '</td>').appendTo(rsi);
+        if (this.enabled) {
+          sCell.click(this.clicker(i));
+        }
+        $('<td>' + i + '</td>').appendTo(rsi).css(styleHdr);
       }
       return this.draw();
     };
@@ -410,7 +460,10 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var m, mess, mm, z, _i, _len;
+      var m, mess, moves, pm, z, _i, _j, _len, _len1;
+      if (!this.enabled) {
+        return;
+      }
       if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
         return;
@@ -419,21 +472,33 @@
           mess = this.board.gameOver() ? "Game Over!" : "Ходите дальше!";
           alert(mess);
           this.draw();
+          if (this.log_hist != null) {
+            this.log_hist("Ход юга: " + i);
+          }
           return;
         }
       }
       if (this.board.gameOver()) {
         alert("Game Over!");
         this.draw();
+        if (this.log_hist != null) {
+          this.log_hist("Ход юга-конец");
+        }
         return;
       }
-      m = this.board.possibleMoves(2);
-      if (m.length > 0) {
-        mm = this.alg.findAnyMove(this.board, 2);
-        this.board.do_move(mm, 2);
+      pm = this.board.possibleMoves(2);
+      if (pm.length > 0) {
+        moves = this.alg.findAnyMove(this.board, 2);
+        for (_i = 0, _len = moves.length; _i < _len; _i++) {
+          m = moves[_i];
+          this.board.do_move([m], 2);
+          if (this.log_hist != null) {
+            this.log_hist("Ход севера: " + m);
+          }
+        }
         this.nord_moves = [];
-        for (_i = 0, _len = mm.length; _i < _len; _i++) {
-          z = mm[_i];
+        for (_j = 0, _len1 = moves.length; _j < _len1; _j++) {
+          z = moves[_j];
           this.nord_moves.push(z);
         }
       }
@@ -491,9 +556,29 @@
       return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt);
     };
 
+    Kalah.prototype.log_hist = function(m) {
+      var b, d;
+      b = this.board.template();
+      this.board.fill(b);
+      this.db2.set_board(b);
+      d = $("<div></div>");
+      if (m != null) {
+        d.append("<p>" + m + "</p>");
+      }
+      d.append(this.db2.tbl);
+      return this.div_hist.prepend(d);
+    };
+
     Kalah.prototype.init = function() {
-      var btnInit, divctrl, f, r, t;
+      var btnInit, divctrl, f, r, styleWOBord, t;
       this.display_board = new DisplayBoard(this.board);
+      this.display_board.log_hist = (function(_this) {
+        return function(m) {
+          return _this.log_hist(m);
+        };
+      })(this);
+      this.db2 = new DisplayBoard(this.board);
+      this.db2.enabled = NO;
       this.display_board.after_move = (function(_this) {
         return function() {
           return _this.info();
@@ -502,23 +587,34 @@
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
-      t = this.html_table().appendTo(divctrl);
+      styleWOBord = {
+        "border-top": "none",
+        "border-bottom": "none",
+        "border-left": "none",
+        "border-right": "none",
+        "padding": "0px"
+      };
+      t = this.html_table().css(styleWOBord).appendTo(divctrl);
       r = this.html_tr(t);
-      this.html_td(r).html('Лунок');
-      this.selCell = this.html_sel().appendTo(this.html_td(r));
+      this.html_td(r).css(styleWOBord).html('Лунок');
+      this.selCell = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selCell, 4, 4);
       this.html_opt(this.selCell, 6, 6);
       this.html_opt(this.selCell, 8, 8);
       r = this.html_tr(t);
-      this.html_td(r).html('Камней');
-      this.selSeed = this.html_sel().appendTo(this.html_td(r));
+      this.html_td(r).css(styleWOBord).html('Камней');
+      this.selSeed = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selSeed, 3, 3);
       this.html_opt(this.selSeed, 4, 4);
       this.html_opt(this.selSeed, 5, 5);
       this.html_opt(this.selSeed, 6, 6);
+      $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
       f = $('<font size="7"></font>').appendTo($('#root'));
       this.div_b = $('<div></div>').appendTo(f);
+      this.div_hist = $('<p></p>').appendTo($('#root'));
+      this.div_hist = $('<p>История</p>').appendTo($('#root'));
+      this.div_hist = $('<div></div>').appendTo($('#root'));
       this.newGame(8, 6);
       return btnInit.click((function(_this) {
         return function() {
