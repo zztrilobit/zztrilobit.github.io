@@ -356,13 +356,16 @@ class DisplayBoard
             
         @draw()
         @log_hist(1,i) if @log_hist?
-        return if finish
+        return if finish  
         setTimeout((()=>@robot()) , 100)
         #@robot()
     robot:()->
         pm=@board.possibleMoves(2)
         if pm.length>0 
             moves=@alg.findAnyMove @board,2
+            # заплатка - алгоритм не вернул ход, хотя он возможен
+            if moves.length==0 
+                moves=getRandomA(pm)
             for m in moves
                 @board.do_move([m],2)
                 @log_hist(2,m) if @log_hist?
