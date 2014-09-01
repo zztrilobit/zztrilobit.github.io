@@ -56,7 +56,7 @@
     };
 
     KalahSide.prototype.inc_cell = function(c) {
-      return this.data[this.ind(c)]++;
+      return ++this.data[this.ind(c)];
     };
 
     KalahSide.prototype.extract_cell = function(c) {
@@ -81,16 +81,17 @@
   })();
 
   KalahBoard = (function() {
-    function KalahBoard(cell_count, seed_count) {
+    function KalahBoard(cell_count, seed_count, continue_move) {
       this.cell_count = cell_count;
       this.seed_count = seed_count;
       this.field = [];
       this.field[1] = new KalahSide(cell_count, seed_count, 1);
       this.field[2] = new KalahSide(cell_count, seed_count, 2);
+      this.continue_move = continue_move;
     }
 
     KalahBoard.prototype.template = function() {
-      return new KalahBoard(this.cell_count, 0);
+      return new KalahBoard(this.cell_count, 0, this.continue_move);
     };
 
     KalahBoard.prototype.fill = function(b) {
@@ -104,17 +105,19 @@
     };
 
     KalahBoard.prototype.do_move = function(m, side) {
-      var z, _i, _len;
+      var z, _i, _len, _results;
+      _results = [];
       for (_i = 0, _len = m.length; _i < _len; _i++) {
         z = m[_i];
         this.move(side, z);
+        _results.push(this.post_game_over(3 - side));
       }
-      return this.post_game_over();
+      return _results;
     };
 
-    KalahBoard.prototype.post_game_over = function() {
+    KalahBoard.prototype.post_game_over = function(side) {
       var i, _i, _ref, _results;
-      if (this.gameOver()) {
+      if (this.gameOver(side)) {
         _results = [];
         for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
           this.field[1].man += this.field[1].extract_cell(i);
@@ -147,10 +150,15 @@
           res = YES;
           if (n === 0 && side === curr_side) {
             if (curr_cnt > 1) {
-              n = this.field[curr_side].extract_cell(next_point);
+              if (this.continue_move) {
+                n = this.field[curr_side].extract_cell(next_point);
+              }
             } else {
               z = this.field[3 - side].extract_cell(this.cell_count - next_point + 1);
-              this.field[side].man += z;
+              if (z > 0) {
+                this.field[curr_side].man += z + 1;
+                this.field[curr_side].extract_cell(next_point);
+              }
             }
           }
           next_point++;
@@ -159,19 +167,14 @@
       return res;
     };
 
-    KalahBoard.prototype.gameOver = function() {
-      var a1, a2, i, _i, _ref;
-      a1 = YES;
-      a2 = YES;
+    KalahBoard.prototype.gameOver = function(side) {
+      var i, _i, _ref;
       for (i = _i = 0, _ref = this.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (this.field[1].data[i] > 0) {
-          a1 = NO;
-        }
-        if (this.field[2].data[i] > 0) {
-          a2 = NO;
+        if (this.field[side].data[i] > 0) {
+          return NO;
         }
       }
-      return a1 || a2;
+      return YES;
     };
 
     KalahBoard.prototype.possibleMoves = function(side) {
@@ -184,7 +187,7 @@
         alert('0');
       }
       if (this.test_board == null) {
-        this.test_board = new KalahBoard(this.cell_count, this.seed_count);
+        this.test_board = this.template();
       }
       res = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
@@ -255,7 +258,7 @@
 
     Heuristic.prototype.rate = function(board, side) {
       var i, o, s, _i, _ref;
-      if (!board.gameOver()) {
+      if (!board.gameOver(side)) {
         return board.field[side].man - board.field[3 - side].man;
       } else {
         s = board.field[side].man;
@@ -305,7 +308,7 @@
         rate: 0
       };
       res.best_moves = [];
-      if (depth <= 0 || board.gameOver()) {
+      if (depth <= 0 || board.gameOver(side)) {
         res.rate = this.heur.rate(board, side);
         res.moves = [];
         return res;
@@ -321,7 +324,7 @@
         if (rez_rate < alpha) {
           board.fill(b);
           b.do_move(m, side);
-          if (b.gameOver() || depth === 1) {
+          if (b.gameOver(3 - side) || depth === 1) {
             curr_rate = this.heur.rate(board, side);
           } else {
             r = this.inf_plus;
@@ -372,7 +375,7 @@
   DisplayBoard = (function() {
     function DisplayBoard() {
       this.u = new Utils();
-      this.alg = new MiniMax(6);
+      this.alg = new MiniMax(4);
       this.nord_moves = [];
       this.enabled = YES;
       this.after_move = void 0;
@@ -460,32 +463,42 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var m, mess, moves, pm, z, _i, _j, _len, _len1;
+      var finish, log_mess, mess;
       if (!this.enabled) {
         return;
       }
+      finish = NO;
       if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
         return;
       } else {
         if (!this.board.move(1, i)) {
-          mess = this.board.gameOver() ? "Game Over!" : "Ходите дальше!";
+          log_mess = "Ход юга " + i;
+          mess = this.board.gameOver(2) ? "Game Over!" : "Ходите дальше!";
           alert(mess);
-          this.draw();
-          if (this.log_hist != null) {
-            this.log_hist("Ход юга: " + i);
-          }
-          return;
+          finish = YES;
         }
       }
-      if (this.board.gameOver()) {
+      if (this.board.gameOver(2)) {
         alert("Game Over!");
-        this.draw();
-        if (this.log_hist != null) {
-          this.log_hist("Ход юга-конец");
-        }
+        finish = YES;
+      }
+      this.draw();
+      if (this.log_hist != null) {
+        this.log_hist(1, i);
+      }
+      if (finish) {
         return;
       }
+      return setTimeout(((function(_this) {
+        return function() {
+          return _this.robot();
+        };
+      })(this)), 100);
+    };
+
+    DisplayBoard.prototype.robot = function() {
+      var m, moves, pm, z, _i, _j, _len, _len1;
       pm = this.board.possibleMoves(2);
       if (pm.length > 0) {
         moves = this.alg.findAnyMove(this.board, 2);
@@ -493,7 +506,7 @@
           m = moves[_i];
           this.board.do_move([m], 2);
           if (this.log_hist != null) {
-            this.log_hist("Ход севера: " + m);
+            this.log_hist(2, m);
           }
         }
         this.nord_moves = [];
@@ -502,7 +515,7 @@
           this.nord_moves.push(z);
         }
       }
-      if (this.board.gameOver()) {
+      if (this.board.gameOver(1)) {
         alert("Game Over!");
       }
       if (this.after_move != null) {
@@ -520,12 +533,14 @@
       this.board = new KalahBoard(8, 6);
     }
 
-    Kalah.prototype.newGame = function(cell, seed) {
-      this.board = new KalahBoard(cell, seed);
+    Kalah.prototype.newGame = function(cell, seed, depth, cont_move) {
+      this.board = new KalahBoard(cell, seed, cont_move === 1);
       this.display_board.set_board(this.board);
       this.div_b.html(' ');
       this.div_b.append(this.display_board.tbl);
-      return this.display_board.draw();
+      this.display_board.draw();
+      this.display_board.alg.depth = depth;
+      return this.div_hist.html('');
     };
 
     Kalah.prototype.html_sel = function() {
@@ -553,18 +568,18 @@
     };
 
     Kalah.prototype.info = function() {
-      return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt);
+      return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt + ' Глубина  ' + this.display_board.alg.depth);
     };
 
-    Kalah.prototype.log_hist = function(m) {
-      var b, d;
+    Kalah.prototype.log_hist = function(side, cell) {
+      var b, color, d, m;
       b = this.board.template();
       this.board.fill(b);
       this.db2.set_board(b);
-      d = $("<div></div>");
-      if (m != null) {
-        d.append("<p>" + m + "</p>");
-      }
+      color = side === 1 ? "#b0c4de" : "#c4b0de";
+      d = $("<div></div>").css("background-color", color);
+      m = "Ход " + (side === 1 ? "юга" : "севера") + " " + cell;
+      d.append("<p>" + m + "</p>");
       d.append(this.db2.tbl);
       return this.div_hist.prepend(d);
     };
@@ -573,8 +588,8 @@
       var btnInit, divctrl, f, r, styleWOBord, t;
       this.display_board = new DisplayBoard(this.board);
       this.display_board.log_hist = (function(_this) {
-        return function(m) {
-          return _this.log_hist(m);
+        return function(side, cell) {
+          return _this.log_hist(side, cell);
         };
       })(this);
       this.db2 = new DisplayBoard(this.board);
@@ -599,7 +614,7 @@
       this.html_td(r).css(styleWOBord).html('Лунок');
       this.selCell = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selCell, 4, 4);
-      this.html_opt(this.selCell, 6, 6);
+      this.html_opt(this.selCell, 6, 6).attr("selected", "selected");
       this.html_opt(this.selCell, 8, 8);
       r = this.html_tr(t);
       this.html_td(r).css(styleWOBord).html('Камней');
@@ -607,7 +622,19 @@
       this.html_opt(this.selSeed, 3, 3);
       this.html_opt(this.selSeed, 4, 4);
       this.html_opt(this.selSeed, 5, 5);
-      this.html_opt(this.selSeed, 6, 6);
+      this.html_opt(this.selSeed, 6, 6).attr("selected", "selected");
+      r = this.html_tr(t);
+      this.html_td(r).css(styleWOBord).html('Глубина просмотра');
+      this.selDepth = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
+      this.html_opt(this.selDepth, 3, 3);
+      this.html_opt(this.selDepth, 4, 4);
+      this.html_opt(this.selDepth, 5, 5);
+      this.html_opt(this.selDepth, 6, 6).attr("selected", "selected");
+      r = this.html_tr(t);
+      this.html_td(r).css(styleWOBord).html('Продолжить посев');
+      this.selContMove = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
+      this.html_opt(this.selContMove, 'Да', 1).attr("selected", "selected");
+      this.html_opt(this.selContMove, "Нет", 2);
       $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
       f = $('<font size="7"></font>').appendTo($('#root'));
@@ -615,10 +642,10 @@
       this.div_hist = $('<p></p>').appendTo($('#root'));
       this.div_hist = $('<p>История</p>').appendTo($('#root'));
       this.div_hist = $('<div></div>').appendTo($('#root'));
-      this.newGame(8, 6);
+      this.newGame(6, 6, 6, YES);
       return btnInit.click((function(_this) {
         return function() {
-          return _this.newGame(parseInt(_this.selCell.val()), parseInt(_this.selSeed.val()));
+          return _this.newGame(parseInt(_this.selCell.val()), parseInt(_this.selSeed.val()), parseInt(_this.selDepth.val()), parseInt(_this.selContMove.val()));
         };
       })(this));
     };

@@ -35,7 +35,7 @@ class KalahSide
     #доступ к ячейкам
     get_cell:(c)->@data[@ind(c)]
     set_cell:(c,v)->@data[@ind(c)]=v
-    inc_cell:(c)->@data[@ind(c)]++
+    inc_cell:(c)->++@data[@ind(c)]
     extract_cell:(c)->
         res=@data[@ind(c)]
         @data[@ind(c)]=0
@@ -49,14 +49,15 @@ class KalahSide
             
             
 class KalahBoard
-    constructor: (cell_count,seed_count)->
+    constructor: (cell_count,seed_count,continue_move)->
         @cell_count=cell_count
         @seed_count=seed_count
         @field=[]
         @field[1]=new KalahSide(cell_count,seed_count,1)
         @field[2]=new KalahSide(cell_count,seed_count,2)
+        @continue_move=continue_move
     
-    template:()-> return new KalahBoard(@cell_count,0)
+    template:()-> return new KalahBoard(@cell_count,0,@continue_move)
     
     fill: (b)->
         @field[1].fill(b.field[1])
@@ -69,10 +70,10 @@ class KalahBoard
     do_move:(m,side) ->
         for z in m 
             @move(side,z)
-        @post_game_over()
+            @post_game_over(3-side)
     
-    post_game_over: ()->
-        if @gameOver()
+    post_game_over: (side)->
+        if @gameOver(side)
             for i in [1..@cell_count]
                 @field[1].man+=@field[1].extract_cell(i)
                 @field[2].man+=@field[2].extract_cell(i)
@@ -101,22 +102,23 @@ class KalahBoard
                 res=YES
                 if n==0 and side==curr_side
                     if curr_cnt>1 
-                        #последний бросок в непустую лунку - продолжаем посев
-                        n=@field[curr_side].extract_cell(next_point)
+                        #последний бросок в непустую лунку - продолжаем посев, если задана опция игры
+                        if @continue_move
+                            n=@field[curr_side].extract_cell(next_point)
                     else
                         # последний бросок в пустую - переложим в свою копилку
-                        z=@field[3-side].extract_cell(@cell_count-next_point+1)
-                        @field[side].man+=z
+                        z= @field[3-side].extract_cell(@cell_count-next_point+1)
+                        if z>0 
+                            # со стороны оппонента+1 свой
+                            @field[curr_side].man+=(z+1)
+                            @field[curr_side].extract_cell(next_point)
                 next_point++
         return res
     
-    gameOver:()->
-        a1=YES
-        a2=YES
+    gameOver:(side)->
         for i in [0..@cell_count-1]
-            if @field[1].data[i]>0 then a1=NO
-            if @field[2].data[i]>0 then a2=NO
-        return a1 or a2
+            if @field[side].data[i]>0 then return NO
+        return YES
         
     possibleMoves:(side) ->
         return @possibleMoves_r(side,100) 
@@ -124,7 +126,7 @@ class KalahBoard
     possibleMoves_r:(side,d) ->
         if d<=0
             alert '0'
-        if not @test_board? then @test_board=new KalahBoard(@cell_count,@seed_count)
+        if not @test_board? then @test_board=@template()
         res=[]
         for i in [1..@cell_count]
             if @field[side].get_cell(i)>0
@@ -164,7 +166,7 @@ class Heuristic
         
     rate: (board,side)->
 
-        if not board.gameOver()
+        if not board.gameOver(side)
             return board.field[side].man-board.field[3-side].man
         else
             s=board.field[side].man
@@ -200,7 +202,7 @@ class MiniMax
         res=(rate:0)
         res.best_moves=[]
       
-        if depth<=0 or board.gameOver()
+        if depth<=0 or board.gameOver(side)
             res.rate=@heur.rate(board,side)
             res.moves=[]
             return res
@@ -220,7 +222,7 @@ class MiniMax
                 board.fill(b)
                 b.do_move(m,side)
             
-                if b.gameOver() or depth==1
+                if b.gameOver(3-side) or depth==1
                     curr_rate=@heur.rate(board,side)
                 else
                     # наихудший для нас ответ оппонента
@@ -261,7 +263,7 @@ class MiniMax
 class DisplayBoard
     constructor: ()->
         @u=new Utils()
-        @alg=new MiniMax(6)
+        @alg=new MiniMax(4)
         @nord_moves=[]
         #будет ли доска реагировать на мышку
         @enabled=YES
@@ -337,32 +339,37 @@ class DisplayBoard
     
     onCellClick: (i) ->
         return if not @enabled
+        finish=NO
         if @board.field[1].get_cell(i) is 0
             alert "Пустая ячейка"
             return
         else
             if not @board.move(1,i)
-                mess= if @board.gameOver() then "Game Over!" else "Ходите дальше!"
+                log_mess= "Ход юга "+i 
+                mess= if @board.gameOver(2) then "Game Over!" else "Ходите дальше!"
                 alert mess
-                @draw()
-                @log_hist("Ход юга: "+i) if @log_hist?
-                return
-        if @board.gameOver()
+                finish=YES
+
+        if @board.gameOver(2)
             alert "Game Over!"
-            @draw()
-            @log_hist("Ход юга-конец") if @log_hist?
-            return
+            finish=YES
             
+        @draw()
+        @log_hist(1,i) if @log_hist?
+        return if finish
+        setTimeout((()=>@robot()) , 100)
+        #@robot()
+    robot:()->
         pm=@board.possibleMoves(2)
         if pm.length>0 
             moves=@alg.findAnyMove @board,2
             for m in moves
                 @board.do_move([m],2)
-                @log_hist("Ход севера: "+m) if @log_hist?
+                @log_hist(2,m) if @log_hist?
             @nord_moves=[]
             @nord_moves.push(z) for z in moves 
 
-        if @board.gameOver()
+        if @board.gameOver(1)
             alert "Game Over!"
         @after_move() if @after_move?
         @draw()        
@@ -371,13 +378,14 @@ class Kalah
     constructor: ()->
         @board = new KalahBoard(8,6)
 
-    newGame:(cell,seed)->
-        @board=new KalahBoard(cell,seed)
+    newGame:(cell,seed,depth,cont_move)->
+        @board=new KalahBoard(cell,seed,cont_move==1)
         @display_board.set_board(@board)
         @div_b.html(' ')
         @div_b.append(@display_board.tbl)
         @display_board.draw()
-
+        @display_board.alg.depth=depth
+        @div_hist.html('')
         
     html_sel:()->
         $('<select><select>')
@@ -396,20 +404,21 @@ class Kalah
         $('<option value="' + val+ '">'+key+'</option>').appendTo(sel)
         
     info:()->
-        
-        @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt ) 
+        @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt +  ' Глубина  '+ @display_board.alg.depth) 
     
-    log_hist:(m)->
+    log_hist:(side,cell)->
         b=@board.template()
         @board.fill(b)
         @db2.set_board(b)
-        d=$ "<div></div>"
-        d.append("<p>"+m+"</p>") if m?
+        color = if side==1 then "#b0c4de" else "#c4b0de"
+        d=$("<div></div>").css("background-color", color)
+        m="Ход " + ( if side==1 then "юга" else "севера") + " " + cell
+        d.append("<p>"+m+"</p>") 
         d.append(@db2.tbl)
         @div_hist.prepend(d)
     init: ()->
         @display_board = new DisplayBoard(@board)
-        @display_board.log_hist=(m)=>@log_hist(m)
+        @display_board.log_hist=(side,cell)=>@log_hist(side,cell)
         @db2 = new DisplayBoard(@board)
         @db2.enabled=NO
         
@@ -434,7 +443,7 @@ class Kalah
         
         @selCell=@html_sel().appendTo(@html_td(r).css(styleWOBord))
         @html_opt(@selCell,4,4)
-        @html_opt(@selCell,6,6)
+        @html_opt(@selCell,6,6).attr("selected", "selected");
         @html_opt(@selCell,8,8)
         
         r=@html_tr(t)
@@ -445,8 +454,23 @@ class Kalah
         @html_opt(@selSeed,3,3)
         @html_opt(@selSeed,4,4)
         @html_opt(@selSeed,5,5)
-        @html_opt(@selSeed,6,6)
+        @html_opt(@selSeed,6,6).attr("selected", "selected")
         
+        r=@html_tr(t)
+        @html_td(r).css(styleWOBord).html('Глубина просмотра')
+        
+        @selDepth=@html_sel().appendTo(@html_td(r).css(styleWOBord))
+        @html_opt(@selDepth,3,3)
+        @html_opt(@selDepth,4,4)
+        @html_opt(@selDepth,5,5)
+        @html_opt(@selDepth,6,6).attr("selected", "selected")
+
+        r=@html_tr(t)
+        @html_td(r).css(styleWOBord).html('Продолжить посев')
+        
+        @selContMove=@html_sel().appendTo(@html_td(r).css(styleWOBord))
+        @html_opt(@selContMove,'Да',1).attr("selected", "selected");
+        @html_opt(@selContMove,"Нет",2)
         
         $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
@@ -456,8 +480,8 @@ class Kalah
         @div_hist=$('<p></p>').appendTo($('#root'))
         @div_hist=$('<p>История</p>').appendTo($('#root'))
         @div_hist=$('<div></div>').appendTo($('#root'))
-        @newGame(8,6)
-        btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val())) )
+        @newGame(6,6,6,YES)
+        btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val()),parseInt(@selDepth.val()),parseInt(@selContMove.val())))
         
     
 
