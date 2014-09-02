@@ -31,6 +31,7 @@ class KalahSide
         @man=0
         for i in [1..@cell_count]
             @data.push(@seed_count)
+        return this
     
     #доступ к ячейкам
     get_cell:(c)->@data[@ind(c)]
@@ -46,6 +47,7 @@ class KalahSide
         b.man=@man        
         for i in [1..@cell_count]
             b.data[i-1]=@data[i-1]
+        return this
             
             
 class KalahBoard
@@ -64,13 +66,30 @@ class KalahBoard
         @field[2].fill(b.field[2])
     
     init:()->
+        @gover=NO
         @field[1].init()
         @field[2].init()
         
     do_move:(m,side) ->
         for z in m 
             @move(side,z)
-            @post_game_over(3-side)
+            #@post_game_over(3-side)
+        @check_gover()
+        
+    check_gover:()->
+        s1=0
+        s2=0
+        for i in [0..@cell_count-1]
+            s1+=@field[1].data[i]
+            s2+=@field[2].data[i]
+        if (s1 is 0) or (s2 is 0)
+            @gover=YES
+            @field[1].man+=s1
+            @field[2].man+=s2
+            for i in [0..@cell_count-1]
+                @field[1].data[i]=0
+                @field[2].data[i]=0
+
     
     post_game_over: (side)->
         if @gameOver(side)
@@ -116,9 +135,7 @@ class KalahBoard
         return res
     
     gameOver:(side)->
-        for i in [0..@cell_count-1]
-            if @field[side].data[i]>0 then return NO
-        return YES
+        return @gover
         
     possibleMoves:(side) ->
         return @possibleMoves_r(side,100) 
@@ -132,7 +149,9 @@ class KalahBoard
             if @field[side].get_cell(i)>0
                 # по непустым лункам
                 @fill(@test_board)
-                if not @test_board.move(side,i)
+                done= @test_board.move(side,[i])
+                @test_board.check_gover()
+                if (not done) and (not @test_board.gover)
                     for m in @test_board.possibleMoves_r(side,d-1)
                         r=[i]
                         r.push(z) for z in m
@@ -267,7 +286,7 @@ class DisplayBoard
         @nord_moves=[]
         #будет ли доска реагировать на мышку
         @enabled=YES
-        @after_move=undefined  
+        @after_move=undefined    
         @log_hist=undefined  
         
     set_board: (board)->
@@ -344,15 +363,17 @@ class DisplayBoard
             alert "Пустая ячейка"
             return
         else
-            if not @board.move(1,i)
+            done= @board.move(1,i)
+            @board.check_gover()
+            if not done
                 log_mess= "Ход юга "+i 
-                mess= if @board.gameOver(2) then "Game Over!" else "Ходите дальше!"
+                mess= if @board.gover then "Game Over!" else "Ходите дальше!"
                 alert mess
                 finish=YES
-
-        if @board.gameOver(2)
-            alert "Game Over!"
-            finish=YES
+            else
+                if @board.gover
+                    alert "Game Over!"
+                    finish=YES
             
         @draw()
         @log_hist(1,i) if @log_hist?
@@ -373,6 +394,8 @@ class DisplayBoard
             @nord_moves.push(z) for z in moves 
 
         if @board.gameOver(1)
+            @board.post_game_over(1)
+            @draw()
             alert "Game Over!"
         @after_move() if @after_move?
         @draw()        

@@ -37,14 +37,13 @@
     }
 
     KalahSide.prototype.init = function() {
-      var i, _i, _ref, _results;
+      var i, _i, _ref;
       this.data = [];
       this.man = 0;
-      _results = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push(this.data.push(this.seed_count));
+        this.data.push(this.seed_count);
       }
-      return _results;
+      return this;
     };
 
     KalahSide.prototype.get_cell = function(c) {
@@ -67,13 +66,12 @@
     };
 
     KalahSide.prototype.fill = function(b) {
-      var i, _i, _ref, _results;
+      var i, _i, _ref;
       b.man = this.man;
-      _results = [];
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push(b.data[i - 1] = this.data[i - 1]);
+        b.data[i - 1] = this.data[i - 1];
       }
-      return _results;
+      return this;
     };
 
     return KalahSide;
@@ -100,19 +98,39 @@
     };
 
     KalahBoard.prototype.init = function() {
+      this.gover = NO;
       this.field[1].init();
       return this.field[2].init();
     };
 
     KalahBoard.prototype.do_move = function(m, side) {
-      var z, _i, _len, _results;
-      _results = [];
+      var z, _i, _len;
       for (_i = 0, _len = m.length; _i < _len; _i++) {
         z = m[_i];
         this.move(side, z);
-        _results.push(this.post_game_over(3 - side));
       }
-      return _results;
+      return this.check_gover();
+    };
+
+    KalahBoard.prototype.check_gover = function() {
+      var i, s1, s2, _i, _j, _ref, _ref1, _results;
+      s1 = 0;
+      s2 = 0;
+      for (i = _i = 0, _ref = this.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        s1 += this.field[1].data[i];
+        s2 += this.field[2].data[i];
+      }
+      if ((s1 === 0) || (s2 === 0)) {
+        this.gover = YES;
+        this.field[1].man += s1;
+        this.field[2].man += s2;
+        _results = [];
+        for (i = _j = 0, _ref1 = this.cell_count - 1; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
+          this.field[1].data[i] = 0;
+          _results.push(this.field[2].data[i] = 0);
+        }
+        return _results;
+      }
     };
 
     KalahBoard.prototype.post_game_over = function(side) {
@@ -168,13 +186,7 @@
     };
 
     KalahBoard.prototype.gameOver = function(side) {
-      var i, _i, _ref;
-      for (i = _i = 0, _ref = this.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (this.field[side].data[i] > 0) {
-          return NO;
-        }
-      }
-      return YES;
+      return this.gover;
     };
 
     KalahBoard.prototype.possibleMoves = function(side) {
@@ -182,7 +194,7 @@
     };
 
     KalahBoard.prototype.possibleMoves_r = function(side, d) {
-      var i, m, r, res, z, _i, _j, _k, _len, _len1, _ref, _ref1;
+      var done, i, m, r, res, z, _i, _j, _k, _len, _len1, _ref, _ref1;
       if (d <= 0) {
         alert('0');
       }
@@ -193,7 +205,9 @@
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         if (this.field[side].get_cell(i) > 0) {
           this.fill(this.test_board);
-          if (!this.test_board.move(side, i)) {
+          done = this.test_board.move(side, [i]);
+          this.test_board.check_gover();
+          if ((!done) && (!this.test_board.gover)) {
             _ref1 = this.test_board.possibleMoves_r(side, d - 1);
             for (_j = 0, _len = _ref1.length; _j < _len; _j++) {
               m = _ref1[_j];
@@ -463,7 +477,7 @@
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
-      var finish, log_mess, mess;
+      var done, finish, log_mess, mess;
       if (!this.enabled) {
         return;
       }
@@ -472,16 +486,19 @@
         alert("Пустая ячейка");
         return;
       } else {
-        if (!this.board.move(1, i)) {
+        done = this.board.move(1, i);
+        this.board.check_gover();
+        if (!done) {
           log_mess = "Ход юга " + i;
-          mess = this.board.gameOver(2) ? "Game Over!" : "Ходите дальше!";
+          mess = this.board.gover ? "Game Over!" : "Ходите дальше!";
           alert(mess);
           finish = YES;
+        } else {
+          if (this.board.gover) {
+            alert("Game Over!");
+            finish = YES;
+          }
         }
-      }
-      if (this.board.gameOver(2)) {
-        alert("Game Over!");
-        finish = YES;
       }
       this.draw();
       if (this.log_hist != null) {
@@ -519,6 +536,8 @@
         }
       }
       if (this.board.gameOver(1)) {
+        this.board.post_game_over(1);
+        this.draw();
         alert("Game Over!");
       }
       if (this.after_move != null) {
