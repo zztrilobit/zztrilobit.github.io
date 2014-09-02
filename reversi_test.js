@@ -212,13 +212,15 @@
       moves = [];
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-          tmpflips = this.getFlips(i, j, side);
-          if (tmpflips.length > 0) {
-            moves.push({
-              y: i,
-              x: j,
-              flips: tmpflips
-            });
+          if (this.field[i][j] === 0) {
+            tmpflips = this.getFlips(i, j, side);
+            if (tmpflips.length > 0) {
+              moves.push({
+                y: i,
+                x: j,
+                flips: tmpflips
+              });
+            }
           }
         }
       }
