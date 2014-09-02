@@ -664,7 +664,7 @@
       this.div_hist = $('<p></p>').appendTo($('#root'));
       this.div_hist = $('<p>История</p>').appendTo($('#root'));
       this.div_hist = $('<div></div>').appendTo($('#root'));
-      this.newGame(6, 6, 6, YES);
+      this.newGame(6, 6, 6, 1);
       return btnInit.click((function(_this) {
         return function() {
           return _this.newGame(parseInt(_this.selCell.val()), parseInt(_this.selSeed.val()), parseInt(_this.selDepth.val()), parseInt(_this.selContMove.val()));

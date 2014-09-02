@@ -506,7 +506,7 @@ class Kalah
         @div_hist=$('<p></p>').appendTo($('#root'))
         @div_hist=$('<p>История</p>').appendTo($('#root'))
         @div_hist=$('<div></div>').appendTo($('#root'))
-        @newGame(6,6,6,YES)
+        @newGame(6,6,6,1)
         btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val()),parseInt(@selDepth.val()),parseInt(@selContMove.val())))
         
     
