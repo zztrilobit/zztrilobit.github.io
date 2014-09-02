@@ -356,6 +356,8 @@ class DisplayBoard
 
     clicker: (i) -> return () => @onCellClick(i)
     
+    gover_msg:()->"Game Over! "+@board.field[1].man+':'+@board.field[2].man
+    
     onCellClick: (i) ->
         return if not @enabled
         finish=NO
@@ -363,11 +365,12 @@ class DisplayBoard
             alert "Пустая ячейка"
             return
         else
+            @log_hist(1,i) if @log_hist?
             done= @board.move(1,i)
             @board.check_gover()
             if not done
                 log_mess= "Ход юга "+i 
-                mess= if @board.gover then "Game Over!" else "Ходите дальше!"
+                mess= if @board.gover then @gover_msg() else "Ходите дальше!"
                 alert mess
                 finish=YES
             else
@@ -376,7 +379,7 @@ class DisplayBoard
                     finish=YES
             
         @draw()
-        @log_hist(1,i) if @log_hist?
+        
         return if finish  
         setTimeout((()=>@robot()) , 100)
         #@robot()
@@ -388,15 +391,17 @@ class DisplayBoard
             if moves.length==0 
                 moves=getRandomA(pm)
             for m in moves
-                @board.do_move([m],2)
                 @log_hist(2,m) if @log_hist?
+                @board.do_move([m],2)
+                
             @nord_moves=[]
             @nord_moves.push(z) for z in moves 
 
         if @board.gameOver(1)
             @board.post_game_over(1)
             @draw()
-            alert "Game Over!"
+            alert @gover_msg()
+            
         @after_move() if @after_move?
         @draw()        
 

@@ -476,6 +476,10 @@
       })(this);
     };
 
+    DisplayBoard.prototype.gover_msg = function() {
+      return "Game Over! " + this.board.field[1].man + ':' + this.board.field[2].man;
+    };
+
     DisplayBoard.prototype.onCellClick = function(i) {
       var done, finish, log_mess, mess;
       if (!this.enabled) {
@@ -486,11 +490,14 @@
         alert("Пустая ячейка");
         return;
       } else {
+        if (this.log_hist != null) {
+          this.log_hist(1, i);
+        }
         done = this.board.move(1, i);
         this.board.check_gover();
         if (!done) {
           log_mess = "Ход юга " + i;
-          mess = this.board.gover ? "Game Over!" : "Ходите дальше!";
+          mess = this.board.gover ? this.gover_msg() : "Ходите дальше!";
           alert(mess);
           finish = YES;
         } else {
@@ -501,9 +508,6 @@
         }
       }
       this.draw();
-      if (this.log_hist != null) {
-        this.log_hist(1, i);
-      }
       if (finish) {
         return;
       }
@@ -524,10 +528,10 @@
         }
         for (_i = 0, _len = moves.length; _i < _len; _i++) {
           m = moves[_i];
-          this.board.do_move([m], 2);
           if (this.log_hist != null) {
             this.log_hist(2, m);
           }
+          this.board.do_move([m], 2);
         }
         this.nord_moves = [];
         for (_j = 0, _len1 = moves.length; _j < _len1; _j++) {
@@ -538,7 +542,7 @@
       if (this.board.gameOver(1)) {
         this.board.post_game_over(1);
         this.draw();
-        alert("Game Over!");
+        alert(this.gover_msg());
       }
       if (this.after_move != null) {
         this.after_move();
