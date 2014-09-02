@@ -3,28 +3,59 @@
 
   ReversiBoard = (function() {
     function ReversiBoard(fs) {
-      var i, j, _i, _j, _len, _len1, _ref, _ref1;
+      var done, i, j, rmap, row, _i, _j, _k, _l, _len, _len1, _m, _n, _o, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
       this.counts = [0, 1, 2];
       this.field_size = fs;
-      this.field = (function() {
-        var _i, _j, _ref, _ref1, _results, _results1;
-        _results = [];
-        for (i = _i = 1, _ref = this.field_size + 1; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-          _results.push((function() {
-            _results1 = [];
-            for (var _j = 1, _ref1 = this.field_size + 1; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; 1 <= _ref1 ? _j++ : _j--){ _results1.push(_j); }
-            return _results1;
-          }).apply(this));
+      this.field = [];
+      this.map = [];
+      for (i = _i = 1, _ref = this.field_size + 1; _i <= _ref; i = _i += 1) {
+        row = [];
+        rmap = [];
+        for (j = _j = 1, _ref1 = this.field_size + 1; _j <= _ref1; j = _j += 1) {
+          row.push(0);
         }
-        return _results;
-      }).call(this);
+        for (j = _k = 1, _ref2 = this.field_size + 1; _k <= _ref2; j = _k += 1) {
+          rmap.push({
+            dummy: ""
+          });
+        }
+        this.field.push(row);
+        this.map.push(rmap);
+      }
+      for (i = _l = 1, _ref3 = this.field_size; _l <= _ref3; i = _l += 1) {
+        for (j = _m = 1, _ref4 = this.field_size; _m <= _ref4; j = _m += 1) {
+          done = 1 === 0;
+          this.map[i][j].cy = i < (this.field_size / 2 + 1) ? 1 : this.field_size;
+          this.map[i][j].cx = j < (this.field_size / 2 + 1) ? 1 : this.field_size;
+          if (this.isCorner(i, j)) {
+            this.map[i][j].type = 'CORNER';
+            done = 1 === 1;
+          }
+          if (!done && this.isPreCorner(i, j)) {
+            this.map[i][j].type = 'PRE_CORNER';
+            done = 1 === 1;
+          }
+          if (!done && (i === 1 || i === this.field_size || j === 1 || j === this.field_size)) {
+            this.map[i][j].type = '1_LINE';
+            done = 1 === 1;
+          }
+          if (!done && (i === 2 || i === this.field_size - 1 || j === 2 || j === this.field_size - 1)) {
+            this.map[i][j].type = '2_LINE';
+            done = 1 === 1;
+          }
+          if (!done) {
+            this.map[i][j].type = 'CENTER';
+            done = 1 === 1;
+          }
+        }
+      }
       this.dirs = [];
-      _ref = [-1, 0, 1];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        i = _ref[_i];
-        _ref1 = [-1, 0, 1];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          j = _ref1[_j];
+      _ref5 = [-1, 0, 1];
+      for (_n = 0, _len = _ref5.length; _n < _len; _n++) {
+        i = _ref5[_n];
+        _ref6 = [-1, 0, 1];
+        for (_o = 0, _len1 = _ref6.length; _o < _len1; _o++) {
+          j = _ref6[_o];
           if ((i !== 0) || (j !== 0)) {
             this.dirs.push([i, j]);
           }
@@ -61,21 +92,15 @@
     };
 
     ReversiBoard.prototype.fill = function(dest) {
-      var i, j, _i, _ref, _results;
+      var i, j, _i, _j, _ref, _ref1;
       dest.counts[1] = this.counts[1];
       dest.counts[2] = this.counts[2];
-      _results = [];
       for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        _results.push((function() {
-          var _j, _ref1, _results1;
-          _results1 = [];
-          for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            _results1.push(dest.field[i][j] = this.field[i][j]);
-          }
-          return _results1;
-        }).call(this));
+        for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
+          dest.field[i][j] = this.field[i][j];
+        }
       }
-      return _results;
+      return this;
     };
 
     ReversiBoard.prototype.roll = function(y, x) {
@@ -342,7 +367,7 @@
         brd_rnd_rate = 10;
         for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
           for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            if (board.isCorner(i, j)) {
+            if (board.map[i][j].type === 'CORNER') {
               if (board.field[i][j] === side) {
                 res += corn_rate;
               }
@@ -350,17 +375,9 @@
                 res -= corn_rate;
               }
             } else {
-              if (board.isPreCorner(i, j)) {
-                if (i > board.field_size / 2) {
-                  ii = board.field_size;
-                } else {
-                  ii = 1;
-                }
-                if (j > board.field_size / 2) {
-                  jj = board.field_size;
-                } else {
-                  jj = 1;
-                }
+              if (board.map[i][j].type === 'PRE_CORNER') {
+                ii = board.map[i][j].cy;
+                jj = board.map[i][j].cx;
                 if (board.field[i][j] === side) {
                   if (board.field[ii][jj] === side) {
                     res += brd_rnd_rate;
@@ -369,7 +386,7 @@
                   }
                 }
               } else {
-                if ((i === 1) || (j === 1) in (i === this.board.field_size) || (j === this.board.field_size)) {
+                if (board.map[i][j].type === '1_LINE') {
                   if (board.field[i][j] === side) {
                     res += brd_rnd_rate;
                   }
@@ -465,7 +482,7 @@
     };
 
     Heuristic.prototype.pre_filter = function(board, side, pm) {
-      var cntr, corners, done, l1, l2, m0, pc, z, _i, _len;
+      var cntr, corners, done, l1, l2, m0, pc, t, z, _i, _len;
       corners = [];
       pc = [];
       l1 = [];
@@ -474,25 +491,21 @@
       for (_i = 0, _len = pm.length; _i < _len; _i++) {
         m0 = pm[_i];
         done = 1 === 0;
-        if (board.isCorner(m0.x, m0.y)) {
+        t = board.map[m0.y][m0.x].type;
+        if (t === 'CORNER') {
           corners.push(m0);
-          done = 1 === 1;
         }
-        if (!done && board.isPreCorner(m0.x, m0.y)) {
+        if (t === 'PRE_CORNER') {
           pc.push(m0);
-          done = 1 === 1;
         }
-        if (!done && (m0.x === 1 || m0.x === board.field_size || m0.y === 1 || m0.y === board.field_size)) {
+        if (t === '1_LINE') {
           l1.push(m0);
-          done = 1 === 1;
         }
-        if (!done && (m0.x === 2 || m0.x === board.field_size - 1 || m0.y === 2 || m0.y === board.field_size - 1)) {
+        if (t === '2_LINE') {
           l2.push(m0);
-          done = 1 === 1;
         }
-        if (!done) {
+        if (t === 'CENTER') {
           cntr.push(m0);
-          done = 1 === 1;
         }
       }
       done = 1 === 0;
@@ -525,7 +538,7 @@
     };
 
     Heuristic.prototype.rate = function(board, side) {
-      var brd_rnd_rate, corn_rate, fs, i, ii, j, jj, opp, res, _i, _j, _ref, _ref1;
+      var brd_rnd_rate, corn_rate, cx, cy, fs, i, j, opp, res, t, _i, _j, _ref, _ref1;
       this.cnt++;
       fs = board.field_size;
       res = board.score_side(side);
@@ -534,7 +547,10 @@
         brd_rnd_rate = 20;
         for (i = _i = 1, _ref = this.field_size; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
           for (j = _j = 1, _ref1 = this.field_size; 1 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 1 <= _ref1 ? ++_j : --_j) {
-            if (board.isCorner(i, j)) {
+            t = board.map[i][j].type;
+            cx = board.map[i][j].cx;
+            cy = board.map[i][j].cy;
+            if (t === 'CORNER') {
               if (board.field[i][j] === side) {
                 res += corn_rate;
               }
@@ -542,26 +558,16 @@
                 res -= corn_rate;
               }
             } else {
-              if (board.isPreCorner(i, j)) {
-                if (i > board.field_size / 2) {
-                  ii = board.field_size;
-                } else {
-                  ii = 1;
-                }
-                if (j > board.field_size / 2) {
-                  jj = board.field_size;
-                } else {
-                  jj = 1;
-                }
+              if (t === 'PRE_CORNER') {
                 if (board.field[i][j] === side) {
-                  if (board.field[ii][jj] === side) {
+                  if (board.field[cy][cx] === side) {
                     res += brd_rnd_rate;
                   } else {
                     res -= corn_rate;
                   }
                 }
               } else {
-                if ((i === 1) || (j === 1) || (i === this.board.field_size) || (j === this.board.field_size)) {
+                if (t === '1_LINE') {
                   if (board.field[i][j] === side) {
                     res += brd_rnd_rate;
                   }

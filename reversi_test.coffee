@@ -4,7 +4,38 @@ class ReversiBoard
         # количество по каждой стороне
         @counts=[0,1,2]
         @field_size = fs
-        @field=([1..@field_size+1] for i in [1..@field_size+1])
+        @field=[]
+        @map=[]
+        
+        for i in [1..@field_size+1]  by 1
+            row=[]
+            rmap=[]
+            row.push(0) for j in [1..@field_size+1]  by 1
+            rmap.push( (dummy:"") ) for j in [1..@field_size+1]  by 1
+            @field.push(row)
+            @map.push(rmap)
+        
+        for i in [1..@field_size]  by 1
+            for j in [1..@field_size]  by 1
+                done=(1==0)
+                @map[i][j].cy = if i < (@field_size/2 + 1) then 1 else @field_size
+                @map[i][j].cx = if j < (@field_size/2 + 1) then 1 else @field_size
+                if @isCorner(i,j) 
+                    @map[i][j].type='CORNER'
+                    done=(1==1)
+                if not done and @isPreCorner(i,j)
+                    @map[i][j].type='PRE_CORNER'
+                    done=(1==1)
+                if not done and (i==1 or i==@field_size or j==1 or j==@field_size)
+                    @map[i][j].type='1_LINE'
+                    done=(1==1)
+                if not done and (i==2 or i==@field_size-1 or j==2 or j==@field_size-1)
+                    @map[i][j].type='2_LINE'
+                    done=(1==1)
+                if not done 
+                    @map[i][j].type='CENTER'
+                    done=(1==1)
+                
         @dirs=[]
         for i in [-1,0,1]
             for j in [-1,0,1]
@@ -39,6 +70,7 @@ class ReversiBoard
         for i in [1..@field_size] 
             for j in [1..@field_size]
                 dest.field[i][j]=@field[i][j]
+        return this
         
     roll: (y,x) ->
         switch @field[y][x]
@@ -203,20 +235,20 @@ class MiniMaxABAlg
             brd_rnd_rate=10
             for i in [1..@field_size] 
                 for j in [1..@field_size]
-                    if board.isCorner(i,j) 
+                    if board.map[i][j].type=='CORNER' 
                         if board.field[i][j]==side then res+=corn_rate
                         if board.field[i][j]==opp then res-=corn_rate
                     else
-                        if board.isPreCorner(i,j) 
-                            if i>board.field_size/2 then ii=board.field_size else ii=1
-                            if j>board.field_size/2 then jj=board.field_size else jj=1
+                        if board.map[i][j].type=='PRE_CORNER' 
+                            ii=board.map[i][j].cy
+                            jj=board.map[i][j].cx
                         
                             if board.field[i][j]==side 
                                 if board.field[ii][jj]==side then res+=brd_rnd_rate else res-=corn_rate   
                             #if board.field[i][j]==opp 
                             #    if board.field[ii][jj]==opp then res-=brd_rnd_rate else res+=corn_rate
                         else
-                            if (i==1) or (j==1) of (i==@board.field_size) or (j==@board.field_size)
+                            if board.map[i][j].type=='1_LINE'
                                 if board.field[i][j]==side then res+=brd_rnd_rate
                                 if board.field[i][j]==opp then res-=brd_rnd_rate
             return res
@@ -278,26 +310,23 @@ class Heuristic
         #углы
         for m0 in pm
             done=1==0
+            t= board.map[m0.y][m0.x].type
             # угол
-            if board.isCorner(m0.x,m0.y)
+            if t=='CORNER'
                 corners.push(m0)
-                done=1==1
             # около угла
-            if not done and board.isPreCorner(m0.x,m0.y)
+            if t=='PRE_CORNER'
                 pc.push(m0)
-                done=1==1
             #1 линия
-            if not done and (m0.x==1 or m0.x==board.field_size or m0.y==1 or m0.y==board.field_size) 
+            if t=='1_LINE' 
                 l1.push(m0)
-                done=1==1
             #2 линия
-            if not done and (m0.x==2 or m0.x==board.field_size-1 or m0.y==2 or m0.y==board.field_size-1) 
+            if t=='2_LINE' 
                 l2.push(m0)
-                done=1==1
+                
             # центр
-            if not done 
+            if t=='CENTER' 
                 cntr.push(m0)
-                done=1==1
                 
         done=1==0
         z=[]
@@ -334,20 +363,21 @@ class Heuristic
             brd_rnd_rate=20
             for i in [1..@field_size] 
                 for j in [1..@field_size]
-                    if board.isCorner(i,j) 
+                    t= board.map[i][j].type
+                    cx=board.map[i][j].cx
+                    cy=board.map[i][j].cy
+            
+                    if t=='CORNER' 
                         if board.field[i][j]==side then res+=corn_rate
                         if board.field[i][j]==opp then res-=corn_rate
                     else
-                        if board.isPreCorner(i,j) 
-                            if i>board.field_size/2 then ii=board.field_size else ii=1
-                            if j>board.field_size/2 then jj=board.field_size else jj=1
-                        
+                        if t=='PRE_CORNER' 
                             if board.field[i][j]==side 
-                                if board.field[ii][jj]==side then res+=brd_rnd_rate else res-=corn_rate   
+                                if board.field[cy][cx]==side then res+=brd_rnd_rate else res-=corn_rate   
                             #if board.field[i][j]==opp 
                             #    if board.field[ii][jj]==opp then res-=brd_rnd_rate else res+=corn_rate
                         else
-                            if (i==1) or (j==1) or (i==@board.field_size) or (j==@board.field_size)
+                            if t=='1_LINE'
                                 if board.field[i][j]==side then res+=brd_rnd_rate
                                 if board.field[i][j]==opp then res-=brd_rnd_rate
             return res
