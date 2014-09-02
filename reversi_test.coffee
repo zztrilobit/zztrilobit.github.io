@@ -141,9 +141,10 @@ class ReversiBoard
         moves=[]
         for i in [1..@field_size] 
             for j in [1..@field_size]
-                tmpflips=@getFlips(i,j,side)
-                if tmpflips.length>0
-                    moves.push((y:i, x:j, flips:tmpflips))        
+                if @field[i][j]==0
+                    tmpflips=@getFlips(i,j,side)
+                    if tmpflips.length>0
+                        moves.push((y:i, x:j, flips:tmpflips))        
         return moves
     
     isCorner: (j,i)->(j==1 or j==@field_size) and (i==1 or i==@field_size) 
