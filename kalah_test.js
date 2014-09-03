@@ -443,7 +443,6 @@
         "padding": "0px"
       };
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
-        $('<td >' + (this.cell_count - i + 1) + '</td>').css(styleHdr).appendTo(rni);
         nCell = $('<td></td>').appendTo(rn).css(styleBody);
         this.nFields.push(nCell);
         sCell = $('<td></td>').appendTo(rs).css(styleBody);
@@ -451,7 +450,8 @@
         if (this.enabled) {
           sCell.click(this.clicker(i));
         }
-        $('<td>' + i + '</td>').appendTo(rsi).css(styleHdr);
+        $('<td>' + i + '</td>').appendTo(rni).css(styleHdr);
+        $('<td >' + (this.cell_count - i + 1) + '</td>').css(styleHdr).appendTo(rsi);
       }
       return this.draw();
     };
@@ -496,7 +496,7 @@
         done = this.board.move(1, i);
         this.board.check_gover();
         if (!done) {
-          log_mess = "Ход юга " + i;
+          log_mess = "Ход юга " + (this.board.cell_count - i + 1);
           mess = this.board.gover ? this.gover_msg() : "Ходите дальше!";
           alert(mess);
           finish = YES;
@@ -604,7 +604,7 @@
       this.db2.set_board(b);
       color = side === 1 ? "#b0c4de" : "#c4b0de";
       d = $("<div></div>").css("background-color", color);
-      m = "Ход " + (side === 1 ? "юга" : "севера") + " " + cell;
+      m = "Ход " + (side === 1 ? "юга" : "севера") + " " + (this.board.cell_count - cell + 1);
       d.append("<p>" + m + "</p>");
       d.append(this.db2.tbl);
       return this.div_hist.prepend(d);
