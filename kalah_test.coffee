@@ -58,12 +58,15 @@ class KalahBoard
         @field[1]=new KalahSide(cell_count,seed_count,1)
         @field[2]=new KalahSide(cell_count,seed_count,2)
         @continue_move=continue_move
+        @gover=NO
     
     template:()-> return new KalahBoard(@cell_count,0,@continue_move)
     
     fill: (b)->
         @field[1].fill(b.field[1])
         @field[2].fill(b.field[2])
+        b.continue_move=@continue_move
+        b.gover=@gover
     
     init:()->
         @gover=NO
@@ -192,7 +195,7 @@ class Heuristic
             o=board.field[3-side].man
             for i in [0 .. board.cell_count-1]
                 s+=board.field[side].data[i]
-                o+=board.field[side].data[i]
+                o+=board.field[3-side].data[i]
             return if s>=o then @inf_plus else @inf_minus
     
 class MiniMax
@@ -237,18 +240,18 @@ class MiniMax
         # а в остальном можно подумать
         rez_rate=@inf_minus
         for m in z
-            if rez_rate<alpha
+            if rez_rate<alpha or 1==1
                 board.fill(b)
                 b.do_move(m,side)
             
-                if b.gameOver(3-side) or depth==1
+                if b.gover or depth==1
                     curr_rate=@heur.rate(board,side)
                 else
                     # наихудший для нас ответ оппонента
                     r=@inf_plus
                     zz=b.possibleMoves(opp)
                     for mopp in zz.sort(@heur.sf())
-                        if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
+                        if r>res_rate or 1==1 #текущая ветка не заведомо хуже ранее найденного решения
                             b.fill(b2)
                             b2.do_move(mopp,opp)
                             # если в следующей итерации встретим ветку больше тетущей, прекратим перебор

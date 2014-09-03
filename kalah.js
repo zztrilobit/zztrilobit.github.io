@@ -86,6 +86,7 @@
       this.field[1] = new KalahSide(cell_count, seed_count, 1);
       this.field[2] = new KalahSide(cell_count, seed_count, 2);
       this.continue_move = continue_move;
+      this.gover = NO;
     }
 
     KalahBoard.prototype.template = function() {
@@ -94,7 +95,9 @@
 
     KalahBoard.prototype.fill = function(b) {
       this.field[1].fill(b.field[1]);
-      return this.field[2].fill(b.field[2]);
+      this.field[2].fill(b.field[2]);
+      b.continue_move = this.continue_move;
+      return b.gover = this.gover;
     };
 
     KalahBoard.prototype.init = function() {
@@ -279,7 +282,7 @@
         o = board.field[3 - side].man;
         for (i = _i = 0, _ref = board.cell_count - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
           s += board.field[side].data[i];
-          o += board.field[side].data[i];
+          o += board.field[3 - side].data[i];
         }
         if (s >= o) {
           return this.inf_plus;
@@ -335,10 +338,10 @@
       rez_rate = this.inf_minus;
       for (_i = 0, _len = z.length; _i < _len; _i++) {
         m = z[_i];
-        if (rez_rate < alpha) {
+        if (rez_rate < alpha || 1 === 1) {
           board.fill(b);
           b.do_move(m, side);
-          if (b.gameOver(3 - side) || depth === 1) {
+          if (b.gover || depth === 1) {
             curr_rate = this.heur.rate(board, side);
           } else {
             r = this.inf_plus;
@@ -346,7 +349,7 @@
             _ref = zz.sort(this.heur.sf());
             for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
               mopp = _ref[_j];
-              if (r > res_rate) {
+              if (r > res_rate || 1 === 1) {
                 b.fill(b2);
                 b2.do_move(mopp, opp);
                 rr = this.mx_mn(b2, side, r, depth - 2).rate;
