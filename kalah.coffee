@@ -336,14 +336,14 @@ class DisplayBoard
             "padding": "0px"
 
         for i in [1..@cell_count]
-            $('<td >' + (@cell_count-i+1) + '</td>').css(styleHdr).appendTo(rni)
             nCell=$('<td></td>').appendTo(rn).css(styleBody)
             @nFields.push (nCell)
             sCell=$('<td></td>').appendTo(rs).css(styleBody)
             @sFields.push (sCell)
             
             sCell.click(@clicker(i)) if @enabled
-            $('<td>' + (i) + '</td>').appendTo(rsi).css(styleHdr)
+            $('<td>' + (i) + '</td>').appendTo(rni).css(styleHdr)
+            $('<td >' + (@cell_count-i+1) + '</td>').css(styleHdr).appendTo(rsi)
         @draw()
         
     draw:()->
@@ -369,7 +369,7 @@ class DisplayBoard
             done= @board.move(1,i)
             @board.check_gover()
             if not done
-                log_mess= "Ход юга "+i 
+                log_mess= "Ход юга "+ (@board.cell_count-i+1) 
                 mess= if @board.gover then @gover_msg() else "Ходите дальше!"
                 alert mess
                 finish=YES
@@ -443,7 +443,7 @@ class Kalah
         @db2.set_board(b)
         color = if side==1 then "#b0c4de" else "#c4b0de"
         d=$("<div></div>").css("background-color", color)
-        m="Ход " + ( if side==1 then "юга" else "севера") + " " + cell
+        m="Ход " + ( if side==1 then "юга" else "севера") + " " + (@board.cell_count-cell+1)
         d.append("<p>"+m+"</p>") 
         d.append(@db2.tbl)
         @div_hist.prepend(d)
