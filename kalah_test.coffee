@@ -205,6 +205,7 @@ class MiniMax
         @boards=[]
         @inf_minus=@heur.inf_minus
         @inf_plus=@heur.inf_plus
+        @fullscan=YES
         
     newBoard: (t) ->
         if @boards.length>0 
@@ -240,7 +241,7 @@ class MiniMax
         # а в остальном можно подумать
         rez_rate=@inf_minus
         for m in z
-            if rez_rate<alpha 
+            if rez_rate<alpha or @fullscan
                 board.fill(b)
                 b.do_move(m,side)
             
@@ -251,7 +252,7 @@ class MiniMax
                     r=@inf_plus
                     zz=b.possibleMoves(opp)
                     for mopp in zz.sort(@heur.sf())
-                        if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
+                        if r>res_rate or @fullscan#текущая ветка не заведомо хуже ранее найденного решения
                             b.fill(b2)
                             b2.do_move(mopp,opp)
                             # если в следующей итерации встретим ветку больше тетущей, прекратим перебор
@@ -289,7 +290,7 @@ class DisplayBoard
         @nord_moves=[]
         #будет ли доска реагировать на мышку
         @enabled=YES
-        @after_move=undefined    
+        @after_move=undefined     
         @log_hist=undefined  
         
     set_board: (board)->
@@ -412,13 +413,14 @@ class Kalah
     constructor: ()->
         @board = new KalahBoard(8,6)
 
-    newGame:(cell,seed,depth,cont_move)->
+    newGame:(cell,seed,depth,cont_move,full_scan)->
         @board=new KalahBoard(cell,seed,cont_move==1)
         @display_board.set_board(@board)
         @div_b.html(' ')
         @div_b.append(@display_board.tbl)
         @display_board.draw()
         @display_board.alg.depth=depth
+        @display_board.alg.fullscan=(full_scan==1)
         @div_hist.html('')
         
     html_sel:()->
@@ -505,6 +507,12 @@ class Kalah
         @selContMove=@html_sel().appendTo(@html_td(r).css(styleWOBord))
         @html_opt(@selContMove,'Да',1).attr("selected", "selected");
         @html_opt(@selContMove,"Нет",2)
+
+        r=@html_tr(t)
+        @html_td(r).css(styleWOBord).html('Полный перебор')
+        @selFullScan=@html_sel().appendTo(@html_td(r).css(styleWOBord))
+        @html_opt(@selFullScan,'Да',1).attr("selected", "selected");
+        @html_opt(@selFullScan,"Нет",2)
         
         $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
@@ -514,8 +522,15 @@ class Kalah
         @div_hist=$('<p></p>').appendTo($('#root'))
         @div_hist=$('<p>История</p>').appendTo($('#root'))
         @div_hist=$('<div></div>').appendTo($('#root'))
-        @newGame(6,6,6,1)
-        btnInit.click( ()=>@newGame(parseInt(@selCell.val()),parseInt(@selSeed.val()),parseInt(@selDepth.val()),parseInt(@selContMove.val())))
+        @newGame(6,6,6,1,1)
+        fngc= ()=>
+            cc=parseInt(@selCell.val())
+            sc=parseInt(@selSeed.val())
+            d=parseInt(@selDepth.val())
+            cm=parseInt(@selContMove.val())
+            fs=parseInt(@selFullScan.val())
+            @newGame(cc,sc,d,cm,fs)
+        btnInit.click( fngc )
         
     
 

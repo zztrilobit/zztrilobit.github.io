@@ -303,6 +303,7 @@
       this.boards = [];
       this.inf_minus = this.heur.inf_minus;
       this.inf_plus = this.heur.inf_plus;
+      this.fullscan = YES;
     }
 
     MiniMax.prototype.newBoard = function(t) {
@@ -338,7 +339,7 @@
       rez_rate = this.inf_minus;
       for (_i = 0, _len = z.length; _i < _len; _i++) {
         m = z[_i];
-        if (rez_rate < alpha) {
+        if (rez_rate < alpha || this.fullscan) {
           board.fill(b);
           b.do_move(m, side);
           if (b.gover || depth === 1) {
@@ -349,7 +350,7 @@
             _ref = zz.sort(this.heur.sf());
             for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
               mopp = _ref[_j];
-              if (r > res_rate) {
+              if (r > res_rate || this.fullscan) {
                 b.fill(b2);
                 b2.do_move(mopp, opp);
                 rr = this.mx_mn(b2, side, r, depth - 2).rate;
@@ -562,13 +563,14 @@
       this.board = new KalahBoard(8, 6);
     }
 
-    Kalah.prototype.newGame = function(cell, seed, depth, cont_move) {
+    Kalah.prototype.newGame = function(cell, seed, depth, cont_move, full_scan) {
       this.board = new KalahBoard(cell, seed, cont_move === 1);
       this.display_board.set_board(this.board);
       this.div_b.html(' ');
       this.div_b.append(this.display_board.tbl);
       this.display_board.draw();
       this.display_board.alg.depth = depth;
+      this.display_board.alg.fullscan = full_scan === 1;
       return this.div_hist.html('');
     };
 
@@ -614,7 +616,7 @@
     };
 
     Kalah.prototype.init = function() {
-      var btnInit, divctrl, f, r, styleWOBord, t;
+      var btnInit, divctrl, f, fngc, r, styleWOBord, t;
       this.display_board = new DisplayBoard(this.board);
       this.display_board.log_hist = (function(_this) {
         return function(side, cell) {
@@ -664,6 +666,11 @@
       this.selContMove = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selContMove, 'Да', 1).attr("selected", "selected");
       this.html_opt(this.selContMove, "Нет", 2);
+      r = this.html_tr(t);
+      this.html_td(r).css(styleWOBord).html('Полный перебор');
+      this.selFullScan = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
+      this.html_opt(this.selFullScan, 'Да', 1).attr("selected", "selected");
+      this.html_opt(this.selFullScan, "Нет", 2);
       $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
       f = $('<font size="7"></font>').appendTo($('#root'));
@@ -671,12 +678,19 @@
       this.div_hist = $('<p></p>').appendTo($('#root'));
       this.div_hist = $('<p>История</p>').appendTo($('#root'));
       this.div_hist = $('<div></div>').appendTo($('#root'));
-      this.newGame(6, 6, 6, 1);
-      return btnInit.click((function(_this) {
+      this.newGame(6, 6, 6, 1, 1);
+      fngc = (function(_this) {
         return function() {
-          return _this.newGame(parseInt(_this.selCell.val()), parseInt(_this.selSeed.val()), parseInt(_this.selDepth.val()), parseInt(_this.selContMove.val()));
+          var cc, cm, d, fs, sc;
+          cc = parseInt(_this.selCell.val());
+          sc = parseInt(_this.selSeed.val());
+          d = parseInt(_this.selDepth.val());
+          cm = parseInt(_this.selContMove.val());
+          fs = parseInt(_this.selFullScan.val());
+          return _this.newGame(cc, sc, d, cm, fs);
         };
-      })(this));
+      })(this);
+      return btnInit.click(fngc);
     };
 
     return Kalah;
