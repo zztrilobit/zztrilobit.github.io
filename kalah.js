@@ -318,6 +318,21 @@
       return this.boards.push(b);
     };
 
+
+    /*
+    integer procedure F2(ref(position) p,integer alpha,integer beta): 
+    begin integer m,t; ref(position) q; 
+    generate(p); 
+    q := first(p); 
+    if q = NULL then F2 := f(p) else 
+    begin m := alpha; 
+     while q <> NULL and m < beta do 
+      begin t := -F2(q, -beta, -m); if t > m then m := t; q := next(q); 
+      end; 
+     F2 := m; 
+    end; 
+    end. */
+
     AlfaBeta.prototype.ABPrun = function(board, side, a, b, depth) {
       var best_moves, brd, m, opp, r, res, res_rate, z, _i, _len;
       this.cnt++;
@@ -335,18 +350,20 @@
       res_rate = this.inf_minus;
       best_moves = [];
       z = this.heur.pre_filter(board, side, board.possibleMoves(side));
-      res_rate = this.inf_minus;
+      res_rate = a;
       for (_i = 0, _len = z.length; _i < _len; _i++) {
         m = z[_i];
-        board.fill(brd);
-        brd.do_move(m, side);
-        if (brd.gover) {
-          r = this.heur.rate(brd, side);
-        } else {
-          r = -this.ABPrun(brd, opp, a, b, depth - 1);
-        }
-        if (r > res_rate) {
-          res_rate = r;
+        if (res_rate < b) {
+          board.fill(brd);
+          brd.do_move(m, side);
+          if (brd.gover) {
+            r = this.heur.rate(brd, side);
+          } else {
+            r = -this.ABPrun(brd, opp, -b, -res_rate, depth - 1);
+          }
+          if (r > res_rate) {
+            res_rate = r;
+          }
         }
       }
       return res_rate;
@@ -647,7 +664,7 @@
         this.nord_moves = [];
         for (_j = 0, _len1 = moves.length; _j < _len1; _j++) {
           z = moves[_j];
-          this.nord_moves.push(z);
+          this.nord_moves.push(this.board.cell_count - z + 1);
         }
       }
       if (this.board.gameOver(1)) {
@@ -775,9 +792,9 @@
       this.html_td(r).css(styleWOBord).html('Глубина просмотра');
       this.selDepth = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selDepth, 3, 3);
-      this.html_opt(this.selDepth, 4, 4);
+      this.html_opt(this.selDepth, 4, 4).attr("selected", "selected");
       this.html_opt(this.selDepth, 5, 5);
-      this.html_opt(this.selDepth, 6, 6).attr("selected", "selected");
+      this.html_opt(this.selDepth, 6, 6);
       r = this.html_tr(t);
       this.html_td(r).css(styleWOBord).html('Продолжить посев');
       this.selContMove = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
@@ -795,7 +812,7 @@
       this.div_hist = $('<p></p>').appendTo($('#root'));
       this.div_hist = $('<p>История</p>').appendTo($('#root'));
       this.div_hist = $('<div></div>').appendTo($('#root'));
-      this.newGame(6, 6, 6, 1, 1);
+      this.newGame(6, 6, 4, 1, 1);
       fngc = (function(_this) {
         return function() {
           var cc, cm, d, fs, sc;

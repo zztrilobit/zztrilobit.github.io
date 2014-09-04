@@ -215,7 +215,20 @@ class AlfaBeta
             
     reuse_board: (b) ->
         @boards.push(b)
-        
+    ###
+    integer procedure F2(ref(position) p,integer alpha,integer beta): 
+    begin integer m,t; ref(position) q; 
+    generate(p); 
+    q := first(p); 
+    if q = NULL then F2 := f(p) else 
+    begin m := alpha; 
+     while q <> NULL and m < beta do 
+      begin t := -F2(q, -beta, -m); if t > m then m := t; q := next(q); 
+      end; 
+     F2 := m; 
+    end; 
+    end.
+    ###    
     ABPrun:(board,side,a,b,depth)->
         @cnt++
         opp= if side==1 then 2 else 1
@@ -235,13 +248,16 @@ class AlfaBeta
         z=@heur.pre_filter(board,side,board.possibleMoves(side))
                 
         # а в остальном можно подумать
-        res_rate=@inf_minus
+        res_rate=a
         
         for m in z
-            board.fill(brd)
-            brd.do_move(m,side)
-            if brd.gover then r=@heur.rate(brd,side) else r=-@ABPrun(brd,opp,a,b,depth-1)
-            if r>res_rate then res_rate=r
+            if res_rate<b
+                board.fill(brd)
+                brd.do_move(m,side)
+                if brd.gover 
+                    r=@heur.rate(brd,side) 
+                else r=-@ABPrun(brd,opp,-b,-res_rate,depth-1)
+                if r>res_rate then res_rate=r
         return res_rate
 
     bestMoves: (board,side) ->
@@ -366,7 +382,7 @@ class DisplayBoard
         #будет ли доска реагировать на мышку
         @enabled=YES
         @busy=NO
-        @after_move=undefined    
+        @after_move=undefined  
         @after_busy=undefined    
         @log_hist=undefined  
         
@@ -482,7 +498,7 @@ class DisplayBoard
                 @board.do_move([m],2)
                 
             @nord_moves=[]
-            @nord_moves.push(z) for z in moves 
+            @nord_moves.push(@board.cell_count - z + 1) for z in moves 
 
         if @board.gameOver(1)
             @board.post_game_over(1)
@@ -585,9 +601,9 @@ class Kalah
         
         @selDepth=@html_sel().appendTo(@html_td(r).css(styleWOBord))
         @html_opt(@selDepth,3,3)
-        @html_opt(@selDepth,4,4)
+        @html_opt(@selDepth,4,4).attr("selected", "selected")
         @html_opt(@selDepth,5,5)
-        @html_opt(@selDepth,6,6).attr("selected", "selected")
+        @html_opt(@selDepth,6,6)
 
         r=@html_tr(t)
         @html_td(r).css(styleWOBord).html('Продолжить посев')
@@ -610,7 +626,7 @@ class Kalah
         @div_hist=$('<p></p>').appendTo($('#root'))
         @div_hist=$('<p>История</p>').appendTo($('#root'))
         @div_hist=$('<div></div>').appendTo($('#root'))
-        @newGame(6,6,6,1,1)
+        @newGame(6,6,4,1,1)
         fngc= ()=>
             cc=parseInt(@selCell.val())
             sc=parseInt(@selSeed.val())
