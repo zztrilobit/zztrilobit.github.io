@@ -240,7 +240,7 @@ class MiniMax
         # а в остальном можно подумать
         rez_rate=@inf_minus
         for m in z
-            if rez_rate<alpha or 1==1
+            if rez_rate<alpha 
                 board.fill(b)
                 b.do_move(m,side)
             
@@ -251,7 +251,7 @@ class MiniMax
                     r=@inf_plus
                     zz=b.possibleMoves(opp)
                     for mopp in zz.sort(@heur.sf())
-                        if r>res_rate or 1==1 #текущая ветка не заведомо хуже ранее найденного решения
+                        if r>res_rate #текущая ветка не заведомо хуже ранее найденного решения
                             b.fill(b2)
                             b2.do_move(mopp,opp)
                             # если в следующей итерации встретим ветку больше тетущей, прекратим перебор

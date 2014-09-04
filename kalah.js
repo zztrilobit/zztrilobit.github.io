@@ -338,7 +338,7 @@
       rez_rate = this.inf_minus;
       for (_i = 0, _len = z.length; _i < _len; _i++) {
         m = z[_i];
-        if (rez_rate < alpha || 1 === 1) {
+        if (rez_rate < alpha) {
           board.fill(b);
           b.do_move(m, side);
           if (b.gover || depth === 1) {
@@ -349,7 +349,7 @@
             _ref = zz.sort(this.heur.sf());
             for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
               mopp = _ref[_j];
-              if (r > res_rate || 1 === 1) {
+              if (r > res_rate) {
                 b.fill(b2);
                 b2.do_move(mopp, opp);
                 rr = this.mx_mn(b2, side, r, depth - 2).rate;
