@@ -152,7 +152,7 @@ class KalahBoard
             if @field[side].get_cell(i)>0
                 # по непустым лункам
                 @fill(@test_board)
-                done= @test_board.move(side,[i])
+                done= @test_board.move(side,i)
                 @test_board.check_gover()
                 if (not done) and (not @test_board.gover)
                     for m in @test_board.possibleMoves_r(side,d-1)
@@ -197,7 +197,81 @@ class Heuristic
                 s+=board.field[side].data[i]
                 o+=board.field[3-side].data[i]
             return if s>=o then @inf_plus else @inf_minus
-    
+
+class AlfaBeta            
+    constructor: (depth) ->
+        @heur=new Heuristic()
+        @depth=depth
+        @boards=[]
+        @inf_minus=@heur.inf_minus
+        @inf_plus=@heur.inf_plus
+        @fullscan=YES
+        
+    newBoard: (t) ->
+        if @boards.length>0 
+            return @boards.pop()
+        else
+            return t.template()
+            
+    reuse_board: (b) ->
+        @boards.push(b)
+        
+    ABPrun:(board,side,a,b,depth)->
+        @cnt++
+        opp= if side==1 then 2 else 1
+        res=(rate:0)
+        res.best_moves=[]
+      
+        if depth<=0 or board.gameOver(side)
+            res.rate=@heur.rate(board,side)
+            res.moves=[]
+            return res
+            
+        brd = @newBoard(board)
+        res_rate=@inf_minus
+        best_moves=[]
+        
+        #sf=(a,b)-> return b.flips.length-a.flips.length            
+        z=@heur.pre_filter(board,side,board.possibleMoves(side))
+                
+        # а в остальном можно подумать
+        res_rate=@inf_minus
+        
+        for m in z
+            board.fill(brd)
+            brd.do_move(m,side)
+            if brd.gover then r=@heur.rate(brd,side) else r=-@ABPrun(brd,opp,a,b,depth-1)
+            if r>res_rate then res_rate=r
+        return res_rate
+
+    bestMoves: (board,side) ->
+        @cnt=0
+        opp=3-side
+        if board.gover
+            return []
+        brd = @newBoard(board)
+        res_rate=@inf_minus
+        best_moves=[]
+        
+        #sf=(a,b)-> return b.flips.length-a.flips.length            
+        z=@heur.pre_filter(board,side,board.possibleMoves(side))
+                
+        # а в остальном можно подумать
+        res_rate=@inf_minus
+        result=[]
+        for m in z
+            board.fill(brd)
+            brd.do_move(m,side)
+            if brd.gover then r=@heur.rate(brd,side) else r=-@ABPrun(brd,opp,@inf_plus,@inf_minus,@depth-1)
+            if r>res_rate 
+                result=[]
+                res_rate=r
+            if r==res_rate
+                result.push m
+        return result
+    findAnyMove: (board,side) ->
+        return getRandomM(@bestMoves(board,side))
+        
 class MiniMax
     constructor: (depth) ->
         @heur=new Heuristic()
@@ -287,10 +361,13 @@ class DisplayBoard
     constructor: ()->
         @u=new Utils()
         @alg=new MiniMax(4)
+        #@alg=new AlfaBeta(4)
         @nord_moves=[]
         #будет ли доска реагировать на мышку
         @enabled=YES
-        @after_move=undefined     
+        @busy=NO
+        @after_move=undefined    
+        @after_busy=undefined    
         @log_hist=undefined  
         
     set_board: (board)->
@@ -364,6 +441,9 @@ class DisplayBoard
     
     onCellClick: (i) ->
         return if not @enabled
+        if @busy
+            alert "Calculation"
+            return
         finish=NO
         if @board.field[1].get_cell(i) is 0
             alert "Пустая ячейка"
@@ -384,7 +464,10 @@ class DisplayBoard
             
         @draw()
         
-        return if finish  
+        return if finish 
+        @busy=YES
+        @after_busy() if @after_busy?
+        
         setTimeout((()=>@robot()) , 100)
         #@robot()
     robot:()->
@@ -407,6 +490,7 @@ class DisplayBoard
             alert @gover_msg()
             
         @after_move() if @after_move?
+        @busy=NO
         @draw()        
 
 class Kalah 
@@ -441,6 +525,8 @@ class Kalah
         
     info:()->
         @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt +  ' Глубина  '+ @display_board.alg.depth) 
+    after_busy:()->
+        @span_info.html('... задумался ....') 
     
     log_hist:(side,cell)->
         b=@board.template()
@@ -452,6 +538,7 @@ class Kalah
         d.append("<p>"+m+"</p>") 
         d.append(@db2.tbl)
         @div_hist.prepend(d)
+      
     init: ()->
         @display_board = new DisplayBoard(@board)
         @display_board.log_hist=(side,cell)=>@log_hist(side,cell)
@@ -459,6 +546,7 @@ class Kalah
         @db2.enabled=NO
         
         @display_board.after_move = () => @info() 
+        @display_board.after_busy = () => @after_busy() 
 
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))

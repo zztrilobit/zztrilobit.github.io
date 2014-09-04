@@ -1,5 +1,5 @@
 ﻿(function() {
-  var DisplayBoard, Heuristic, Kalah, KalahBoard, KalahSide, MiniMax, NO, Utils, YES, a, getRandomA, getRandomInt, getRandomM;
+  var AlfaBeta, DisplayBoard, Heuristic, Kalah, KalahBoard, KalahSide, MiniMax, NO, Utils, YES, a, getRandomA, getRandomInt, getRandomM;
 
   NO = 1 === 0;
 
@@ -208,7 +208,7 @@
       for (i = _i = 1, _ref = this.cell_count; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         if (this.field[side].get_cell(i) > 0) {
           this.fill(this.test_board);
-          done = this.test_board.move(side, [i]);
+          done = this.test_board.move(side, i);
           this.test_board.check_gover();
           if ((!done) && (!this.test_board.gover)) {
             _ref1 = this.test_board.possibleMoves_r(side, d - 1);
@@ -293,6 +293,103 @@
     };
 
     return Heuristic;
+
+  })();
+
+  AlfaBeta = (function() {
+    function AlfaBeta(depth) {
+      this.heur = new Heuristic();
+      this.depth = depth;
+      this.boards = [];
+      this.inf_minus = this.heur.inf_minus;
+      this.inf_plus = this.heur.inf_plus;
+      this.fullscan = YES;
+    }
+
+    AlfaBeta.prototype.newBoard = function(t) {
+      if (this.boards.length > 0) {
+        return this.boards.pop();
+      } else {
+        return t.template();
+      }
+    };
+
+    AlfaBeta.prototype.reuse_board = function(b) {
+      return this.boards.push(b);
+    };
+
+    AlfaBeta.prototype.ABPrun = function(board, side, a, b, depth) {
+      var best_moves, brd, m, opp, r, res, res_rate, z, _i, _len;
+      this.cnt++;
+      opp = side === 1 ? 2 : 1;
+      res = {
+        rate: 0
+      };
+      res.best_moves = [];
+      if (depth <= 0 || board.gameOver(side)) {
+        res.rate = this.heur.rate(board, side);
+        res.moves = [];
+        return res;
+      }
+      brd = this.newBoard(board);
+      res_rate = this.inf_minus;
+      best_moves = [];
+      z = this.heur.pre_filter(board, side, board.possibleMoves(side));
+      res_rate = this.inf_minus;
+      for (_i = 0, _len = z.length; _i < _len; _i++) {
+        m = z[_i];
+        board.fill(brd);
+        brd.do_move(m, side);
+        if (brd.gover) {
+          r = this.heur.rate(brd, side);
+        } else {
+          r = -this.ABPrun(brd, opp, a, b, depth - 1);
+        }
+        if (r > res_rate) {
+          res_rate = r;
+        }
+      }
+      return res_rate;
+    };
+
+    AlfaBeta.prototype.bestMoves = function(board, side) {
+      var best_moves, brd, m, opp, r, res_rate, result, z, _i, _len;
+      this.cnt = 0;
+      opp = 3 - side;
+      if (board.gover) {
+        return [];
+      }
+      brd = this.newBoard(board);
+      res_rate = this.inf_minus;
+      best_moves = [];
+      z = this.heur.pre_filter(board, side, board.possibleMoves(side));
+      res_rate = this.inf_minus;
+      result = [];
+      for (_i = 0, _len = z.length; _i < _len; _i++) {
+        m = z[_i];
+        board.fill(brd);
+        brd.do_move(m, side);
+        if (brd.gover) {
+          r = this.heur.rate(brd, side);
+        } else {
+          r = -this.ABPrun(brd, opp, this.inf_plus, this.inf_minus, this.depth - 1);
+        }
+        if (r > res_rate) {
+          result = [];
+          res_rate = r;
+        }
+        if (r === res_rate) {
+          result.push(m);
+        }
+      }
+      return result;
+    };
+
+    AlfaBeta.prototype.findAnyMove = function(board, side) {
+      return getRandomM(this.bestMoves(board, side));
+    };
+
+    return AlfaBeta;
 
   })();
 
@@ -396,7 +493,9 @@
       this.alg = new MiniMax(4);
       this.nord_moves = [];
       this.enabled = YES;
+      this.busy = NO;
       this.after_move = void 0;
+      this.after_busy = void 0;
       this.log_hist = void 0;
     }
 
@@ -489,6 +588,10 @@
       if (!this.enabled) {
         return;
       }
+      if (this.busy) {
+        alert("Calculation");
+        return;
+      }
       finish = NO;
       if (this.board.field[1].get_cell(i) === 0) {
         alert("Пустая ячейка");
@@ -514,6 +617,10 @@
       this.draw();
       if (finish) {
         return;
+      }
+      this.busy = YES;
+      if (this.after_busy != null) {
+        this.after_busy();
       }
       return setTimeout(((function(_this) {
         return function() {
@@ -551,6 +658,7 @@
       if (this.after_move != null) {
         this.after_move();
       }
+      this.busy = NO;
       return this.draw();
     };
 
@@ -602,6 +710,10 @@
       return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt + ' Глубина  ' + this.display_board.alg.depth);
     };
 
+    Kalah.prototype.after_busy = function() {
+      return this.span_info.html('... задумался ....');
+    };
+
     Kalah.prototype.log_hist = function(side, cell) {
       var b, color, d, m;
       b = this.board.template();
@@ -628,6 +740,11 @@
       this.display_board.after_move = (function(_this) {
         return function() {
           return _this.info();
+        };
+      })(this);
+      this.display_board.after_busy = (function(_this) {
+        return function() {
+          return _this.after_busy();
         };
       })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
