@@ -298,8 +298,8 @@ class MiniMax
         @fullscan=NO
         @test_full_scan1=YES
         @test_full_scan2=NO
-        @break_by_cnt=NO
-        @break_cnt=30000
+        @break_by_cnt=YES
+        @break_cnt=25000
         
     newBoard: (t) ->
         if @boards.length>0 
@@ -319,8 +319,8 @@ class MiniMax
         res=(rate:0)
         res.best_moves=[]
         res.broken=NO
-        if @break_by_cnt and (@cnt>@break_cnt)  
-            res.broken=YES
+        if @break_by_cnt and ( @cnt > @break_cnt )  
+            @broken=YES
             return res
       
         if depth<=0 or board.gameOver(side)
@@ -398,16 +398,22 @@ class MiniMax
         return res
             
     bestMoves: (board,side) ->
+        #alert @break_by_cnt
         if not @break_by_cnt
             @cnt=0
             d=@depth
+            @eff_depth=d
             res=@mx_mn(board,side,@inf_plus, d)
             return res.moves
         else    
+            d=@depth
+            done=NO
+            
             while not done
-                @cnt=0           
+                @cnt=0
+                @broken=NO
                 res=@mx_mn(board,side,@inf_plus, d)
-                if res.broken
+                if @broken
                     d--
                 else
                     done=YES
@@ -429,7 +435,7 @@ class DisplayBoard
         #будет ли доска реагировать на мышку
         @enabled=YES
         @busy=NO
-        @after_move=undefined   
+        @after_move=undefined    
         @after_busy=undefined    
         @log_hist=undefined  
         
@@ -587,7 +593,7 @@ class Kalah
         $('<option value="' + val+ '">'+key+'</option>').appendTo(sel)
         
     info:()->
-        @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt +  ' Глубина  '+ @display_board.alg.depth) 
+        @span_info.html('Север ходит '+@display_board.nord_moves.join(',')+ '  Просмотрено позиций '+ @display_board.alg.cnt +  ' Глубина  '+ @display_board.alg.eff_depth) 
     after_busy:()->
         @span_info.html('... задумался ....') 
     

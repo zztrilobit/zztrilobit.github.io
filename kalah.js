@@ -420,8 +420,8 @@
       this.fullscan = NO;
       this.test_full_scan1 = YES;
       this.test_full_scan2 = NO;
-      this.break_by_cnt = NO;
-      this.break_cnt = 30000;
+      this.break_by_cnt = YES;
+      this.break_cnt = 25000;
     }
 
     MiniMax.prototype.newBoard = function(t) {
@@ -446,7 +446,7 @@
       res.best_moves = [];
       res.broken = NO;
       if (this.break_by_cnt && (this.cnt > this.break_cnt)) {
-        res.broken = YES;
+        this.broken = YES;
         return res;
       }
       if (depth <= 0 || board.gameOver(side)) {
@@ -527,13 +527,17 @@
       if (!this.break_by_cnt) {
         this.cnt = 0;
         d = this.depth;
+        this.eff_depth = d;
         res = this.mx_mn(board, side, this.inf_plus, d);
         return res.moves;
       } else {
+        d = this.depth;
+        done = NO;
         while (!done) {
           this.cnt = 0;
+          this.broken = NO;
           res = this.mx_mn(board, side, this.inf_plus, d);
-          if (res.broken) {
+          if (this.broken) {
             d--;
           } else {
             done = YES;
@@ -772,7 +776,7 @@
     };
 
     Kalah.prototype.info = function() {
-      return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt + ' Глубина  ' + this.display_board.alg.depth);
+      return this.span_info.html('Север ходит ' + this.display_board.nord_moves.join(',') + '  Просмотрено позиций ' + this.display_board.alg.cnt + ' Глубина  ' + this.display_board.alg.eff_depth);
     };
 
     Kalah.prototype.after_busy = function() {
