@@ -295,7 +295,11 @@ class MiniMax
         @boards=[]
         @inf_minus=@heur.inf_minus
         @inf_plus=@heur.inf_plus
-        @fullscan=YES
+        @fullscan=NO
+        @test_full_scan1=YES
+        @test_full_scan2=NO
+        @break_by_cnt=NO
+        @break_cnt=30000
         
     newBoard: (t) ->
         if @boards.length>0 
@@ -314,6 +318,10 @@ class MiniMax
         opp= if side==1 then 2 else 1
         res=(rate:0)
         res.best_moves=[]
+        res.broken=NO
+        if @break_by_cnt and (@cnt>@break_cnt)  
+            res.broken=YES
+            return res
       
         if depth<=0 or board.gameOver(side)
             res.rate=@heur.rate(board,side)
@@ -331,25 +339,50 @@ class MiniMax
         # а в остальном можно подумать
         rez_rate=@inf_minus
         for m in z
-            if rez_rate<alpha or @fullscan
+            if rez_rate<alpha 
                 board.fill(b)
                 b.do_move(m,side)
             
                 if b.gover or depth==1
                     curr_rate=@heur.rate(board,side)
+                    curr_fs_rate=curr_rate
                 else
                     # наихудший для нас ответ оппонента
                     r=@inf_plus
                     zz=b.possibleMoves(opp)
                     for mopp in zz.sort(@heur.sf())
-                        if r>res_rate or @fullscan#текущая ветка не заведомо хуже ранее найденного решения
+                        if r>=res_rate #текущая ветка не заведомо хуже ранее найденного решения
+                            b.fill(b2)
+                            b2.do_move(mopp,opp)
+                            # если в следующей итерации встретим ветку больше тетущей, прекратим перебор
+                            rr=@mx_mn(b2,side,r,depth-2).rate
+                            ###
+                            if @test_full_scan1 
+                                b.fill(b2)
+                                b2.do_move(mopp,opp)
+                                rrfs=@mx_mn(b2,side,@inf_plus+10,depth-2).rate
+                                if rrfs<r and rr>=r
+                                    # фуллскан вернул другое!
+                                    alert 'TreeBug1'
+                            ###
+                            r=rr if rr<r
+                    curr_rate=r
+                    
+                    ###
+                    if @test_full_scan2
+                        r=@inf_plus
+                        zz=b.possibleMoves(opp)
+                        for mopp in zz.sort(@heur.sf())
                             b.fill(b2)
                             b2.do_move(mopp,opp)
                             # если в следующей итерации встретим ветку больше тетущей, прекратим перебор
                             rr=@mx_mn(b2,side,r,depth-2).rate
                             r=rr if rr<r
-                    curr_rate=r
-            
+                        curr_fs_rate=r
+                    ###
+                #if @test_full_scan2
+                #    if (curr_fs_rate>res_rate) and not (curr_rate>res_rate)  
+                #        alert "TreeBug2"
                 if curr_rate>res_rate
                     best_moves=[]
                     res_rate=curr_rate
@@ -365,8 +398,22 @@ class MiniMax
         return res
             
     bestMoves: (board,side) ->
-        @cnt=0
-        return @mx_mn(board,side,@inf_plus, @depth).moves
+        if not @break_by_cnt
+            @cnt=0
+            d=@depth
+            res=@mx_mn(board,side,@inf_plus, d)
+            return res.moves
+        else    
+            while not done
+                @cnt=0           
+                res=@mx_mn(board,side,@inf_plus, d)
+                if res.broken
+                    d--
+                else
+                    done=YES
+                
+            @eff_depth=d
+            return res.moves
         
         
     findAnyMove: (board,side) ->
@@ -382,7 +429,7 @@ class DisplayBoard
         #будет ли доска реагировать на мышку
         @enabled=YES
         @busy=NO
-        @after_move=undefined  
+        @after_move=undefined   
         @after_busy=undefined    
         @log_hist=undefined  
         

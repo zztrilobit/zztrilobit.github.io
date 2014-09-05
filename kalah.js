@@ -417,7 +417,11 @@
       this.boards = [];
       this.inf_minus = this.heur.inf_minus;
       this.inf_plus = this.heur.inf_plus;
-      this.fullscan = YES;
+      this.fullscan = NO;
+      this.test_full_scan1 = YES;
+      this.test_full_scan2 = NO;
+      this.break_by_cnt = NO;
+      this.break_cnt = 30000;
     }
 
     MiniMax.prototype.newBoard = function(t) {
@@ -433,13 +437,18 @@
     };
 
     MiniMax.prototype.mx_mn = function(board, side, alpha, depth) {
-      var b, b2, best_moves, curr_rate, m, mopp, opp, r, res, res_rate, rez_rate, rr, z, zz, _i, _j, _len, _len1, _ref;
+      var b, b2, best_moves, curr_fs_rate, curr_rate, m, mopp, opp, r, res, res_rate, rez_rate, rr, z, zz, _i, _j, _len, _len1, _ref;
       this.cnt++;
       opp = side === 1 ? 2 : 1;
       res = {
         rate: 0
       };
       res.best_moves = [];
+      res.broken = NO;
+      if (this.break_by_cnt && (this.cnt > this.break_cnt)) {
+        res.broken = YES;
+        return res;
+      }
       if (depth <= 0 || board.gameOver(side)) {
         res.rate = this.heur.rate(board, side);
         res.moves = [];
@@ -453,27 +462,49 @@
       rez_rate = this.inf_minus;
       for (_i = 0, _len = z.length; _i < _len; _i++) {
         m = z[_i];
-        if (rez_rate < alpha || this.fullscan) {
+        if (rez_rate < alpha) {
           board.fill(b);
           b.do_move(m, side);
           if (b.gover || depth === 1) {
             curr_rate = this.heur.rate(board, side);
+            curr_fs_rate = curr_rate;
           } else {
             r = this.inf_plus;
             zz = b.possibleMoves(opp);
             _ref = zz.sort(this.heur.sf());
             for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
               mopp = _ref[_j];
-              if (r > res_rate || this.fullscan) {
+              if (r >= res_rate) {
                 b.fill(b2);
                 b2.do_move(mopp, opp);
                 rr = this.mx_mn(b2, side, r, depth - 2).rate;
+
+                /*
+                if @test_full_scan1 
+                    b.fill(b2)
+                    b2.do_move(mopp,opp)
+                    rrfs=@mx_mn(b2,side,@inf_plus+10,depth-2).rate
+                    if rrfs<r and rr>=r
+                         * фуллскан вернул другое!
+                        alert 'TreeBug1' */
                 if (rr < r) {
                   r = rr;
                 }
               }
             }
             curr_rate = r;
+
+            /*
+            if @test_full_scan2
+                r=@inf_plus
+                zz=b.possibleMoves(opp)
+                for mopp in zz.sort(@heur.sf())
+                    b.fill(b2)
+                    b2.do_move(mopp,opp)
+                     * если в следующей итерации встретим ветку больше тетущей, прекратим перебор
+                    rr=@mx_mn(b2,side,r,depth-2).rate
+                    r=rr if rr<r
+                curr_fs_rate=r */
           }
           if (curr_rate > res_rate) {
             best_moves = [];
@@ -492,8 +523,25 @@
     };
 
     MiniMax.prototype.bestMoves = function(board, side) {
-      this.cnt = 0;
-      return this.mx_mn(board, side, this.inf_plus, this.depth).moves;
+      var d, done, res;
+      if (!this.break_by_cnt) {
+        this.cnt = 0;
+        d = this.depth;
+        res = this.mx_mn(board, side, this.inf_plus, d);
+        return res.moves;
+      } else {
+        while (!done) {
+          this.cnt = 0;
+          res = this.mx_mn(board, side, this.inf_plus, d);
+          if (res.broken) {
+            d--;
+          } else {
+            done = YES;
+          }
+        }
+        this.eff_depth = d;
+        return res.moves;
+      }
     };
 
     MiniMax.prototype.findAnyMove = function(board, side) {
