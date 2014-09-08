@@ -563,6 +563,7 @@
       this.nord_moves = [];
       this.enabled = YES;
       this.busy = NO;
+      this.on_info = void 0;
       this.after_move = void 0;
       this.after_gover = void 0;
       this.after_busy = void 0;
@@ -650,7 +651,13 @@
     };
 
     DisplayBoard.prototype.gover_msg = function() {
-      return "Game Over! " + this.board.field[1].man + ':' + this.board.field[2].man;
+      return "Game Over! " + this.board.field[2].man + ':' + this.board.field[1].man;
+    };
+
+    DisplayBoard.prototype.onInfo = function() {
+      if (typeof on_info !== "undefined" && on_info !== null) {
+        return on_info();
+      }
     };
 
     DisplayBoard.prototype.onCellClick = function(i) {
@@ -659,12 +666,12 @@
         return;
       }
       if (this.busy) {
-        alert("Calculation");
+        this.onInfo('Идет расчет');
         return;
       }
       finish = NO;
       if (this.board.field[1].get_cell(i) === 0) {
-        alert("Пустая ячейка");
+        this.onInfo("Пустая ячейка");
         return;
       } else {
         if (this.log_hist != null) {
@@ -680,11 +687,11 @@
               this.after_gover();
             }
           }
-          alert(mess);
+          this.onInfo(mess);
           finish = YES;
         } else {
           if (this.board.gover) {
-            alert("Game Over!");
+            this.onInfo(this.gover_msg());
             finish = YES;
             if (this.after_gover != null) {
               this.after_gover();
@@ -734,7 +741,7 @@
         if (this.after_gover != null) {
           this.after_gover();
         }
-        alert(this.gover_msg());
+        this.onInfo(this.gover_msg());
       }
       if (this.after_move != null) {
         this.after_move();
@@ -801,6 +808,10 @@
       return this.span_info.html('... задумался ....');
     };
 
+    Kalah.prototype.onInfo = function(i) {
+      return this.span_info.html(i);
+    };
+
     Kalah.prototype.log_hist = function(side, cell) {
       var b, color, d, m;
       b = this.board.template();
@@ -816,10 +827,10 @@
 
     Kalah.prototype.after_gover = function() {
       if (this.board.field[1].man > this.board.field[2].man) {
-        this.cn_robot++;
+        this.cn_man++;
       }
       if (this.board.field[2].man > this.board.field[1].man) {
-        this.cn_man++;
+        this.cn_robot++;
       }
       return this.span_cnt.html('Счет (север:юг) ' + this.cn_robot + ":" + this.cn_man);
     };
@@ -847,6 +858,11 @@
       this.display_board.after_busy = (function(_this) {
         return function() {
           return _this.after_busy();
+        };
+      })(this);
+      this.display_board.onInfo = (function(_this) {
+        return function(i) {
+          return _this.onInfo(i);
         };
       })(this);
       divctrl = $('<div></div>').appendTo($('#root'));

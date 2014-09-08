@@ -435,6 +435,7 @@ class DisplayBoard
         #будет ли доска реагировать на мышку
         @enabled=YES
         @busy=NO
+        @on_info=undefined       
         @after_move=undefined      
         @after_gover=undefined    
         @after_busy=undefined    
@@ -507,16 +508,18 @@ class DisplayBoard
 
     clicker: (i) -> return () => @onCellClick(i)
     
-    gover_msg:()->"Game Over! "+@board.field[1].man+':'+@board.field[2].man
+    gover_msg:()->"Game Over! "+@board.field[2].man+':'+@board.field[1].man
     
+    onInfo:()->
+        on_info() if on_info?
     onCellClick: (i) ->
         return if not @enabled
         if @busy
-            alert "Calculation"
+            @onInfo 'Идет расчет'
             return
         finish=NO
         if @board.field[1].get_cell(i) is 0
-            alert "Пустая ячейка"
+            @onInfo "Пустая ячейка"
             return
         else
             @log_hist(1,i) if @log_hist?
@@ -527,11 +530,11 @@ class DisplayBoard
                 mess= if @board.gover then @gover_msg() else "Ходите дальше!"
                 if @board.gover
                     @after_gover() if @after_gover?
-                alert mess
+                @onInfo mess
                 finish=YES
             else
                 if @board.gover
-                    alert "Game Over!"
+                    @onInfo (@gover_msg())
                     finish=YES
                     @after_gover() if @after_gover?
         @draw()
@@ -560,7 +563,7 @@ class DisplayBoard
             @board.post_game_over(1)
             @draw()
             @after_gover() if @after_gover?
-            alert @gover_msg()
+            @onInfo( @gover_msg() )
             
         @after_move() if @after_move?
         @busy=NO
@@ -606,6 +609,8 @@ class Kalah
     after_busy:()->
         @span_info.html('... задумался ....') 
     
+    onInfo:(i)->
+        @span_info.html(i) 
     log_hist:(side,cell)->
         b=@board.template()
         @board.fill(b)
@@ -616,7 +621,8 @@ class Kalah
         d.append("<p>"+m+"</p>") 
         d.append(@db2.tbl)
         @div_hist.prepend(d)
-      
+     
+    #call-back game over
     after_gover:()->
         if @board.field[1].man>@board.field[2].man then @cn_man++
         if @board.field[2].man>@board.field[1].man then @cn_robot++
@@ -630,7 +636,7 @@ class Kalah
         @display_board.after_move = () => @info()
         @display_board.after_gover = () => @after_gover()        
         @display_board.after_busy = () => @after_busy() 
-
+        @display_board.onInfo = (i) => @onInfo(i) 
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))
         
