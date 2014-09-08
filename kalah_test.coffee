@@ -566,6 +566,9 @@ class DisplayBoard
             @onInfo( @gover_msg() )
             
         @after_move() if @after_move?
+        
+        if @board.gameOver(1)
+            @onInfo( @gover_msg() )
         @busy=NO
         @draw()        
 

@@ -746,6 +746,9 @@
       if (this.after_move != null) {
         this.after_move();
       }
+      if (this.board.gameOver(1)) {
+        this.onInfo(this.gover_msg());
+      }
       this.busy = NO;
       return this.draw();
     };
