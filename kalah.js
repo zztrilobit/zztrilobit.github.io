@@ -564,6 +564,7 @@
       this.enabled = YES;
       this.busy = NO;
       this.after_move = void 0;
+      this.after_gover = void 0;
       this.after_busy = void 0;
       this.log_hist = void 0;
     }
@@ -674,12 +675,20 @@
         if (!done) {
           log_mess = "Ход юга " + (this.board.cell_count - i + 1);
           mess = this.board.gover ? this.gover_msg() : "Ходите дальше!";
+          if (this.board.gover) {
+            if (this.after_gover != null) {
+              this.after_gover();
+            }
+          }
           alert(mess);
           finish = YES;
         } else {
           if (this.board.gover) {
             alert("Game Over!");
             finish = YES;
+            if (this.after_gover != null) {
+              this.after_gover();
+            }
           }
         }
       }
@@ -722,6 +731,9 @@
       if (this.board.gameOver(1)) {
         this.board.post_game_over(1);
         this.draw();
+        if (this.after_gover != null) {
+          this.after_gover();
+        }
         alert(this.gover_msg());
       }
       if (this.after_move != null) {
@@ -738,7 +750,13 @@
   Kalah = (function() {
     function Kalah() {
       this.board = new KalahBoard(8, 6);
+      this.init_cnt();
     }
+
+    Kalah.prototype.init_cnt = function() {
+      this.cn_robot = 0;
+      return this.cn_man = 0;
+    };
 
     Kalah.prototype.newGame = function(cell, seed, depth, cont_move, full_scan) {
       this.board = new KalahBoard(cell, seed, cont_move === 1);
@@ -796,8 +814,18 @@
       return this.div_hist.prepend(d);
     };
 
+    Kalah.prototype.after_gover = function() {
+      if (this.board.field[1].man > this.board.field[2].man) {
+        this.cn_robot++;
+      }
+      if (this.board.field[2].man > this.board.field[1].man) {
+        this.cn_man++;
+      }
+      return this.span_cnt.html('Счет (север:юг) ' + this.cn_robot + ":" + this.cn_man);
+    };
+
     Kalah.prototype.init = function() {
-      var btnInit, divctrl, f, fngc, r, styleWOBord, t;
+      var btnInit, btnOpts, divctrl, f, fngc, r, styleWOBord, t;
       this.display_board = new DisplayBoard(this.board);
       this.display_board.log_hist = (function(_this) {
         return function(side, cell) {
@@ -811,6 +839,11 @@
           return _this.info();
         };
       })(this);
+      this.display_board.after_gover = (function(_this) {
+        return function() {
+          return _this.after_gover();
+        };
+      })(this);
       this.display_board.after_busy = (function(_this) {
         return function() {
           return _this.after_busy();
@@ -818,6 +851,11 @@
       })(this);
       divctrl = $('<div></div>').appendTo($('#root'));
       btnInit = $('<button>Новая игра</button>').appendTo(divctrl);
+      btnOpts = $('<button>Настройки....</button>').appendTo(divctrl).click((function(_this) {
+        return function() {
+          return _this.opts.toggle();
+        };
+      })(this));
       $('<p></p>').appendTo(divctrl);
       styleWOBord = {
         "border-top": "none",
@@ -826,7 +864,8 @@
         "border-right": "none",
         "padding": "0px"
       };
-      t = this.html_table().css(styleWOBord).appendTo(divctrl);
+      t = this.html_table().hide().css(styleWOBord).appendTo(divctrl);
+      this.opts = t;
       r = this.html_tr(t);
       this.html_td(r).css(styleWOBord).html('Лунок');
       this.selCell = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
@@ -857,6 +896,8 @@
       this.selFullScan = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selFullScan, 'Да', 1).attr("selected", "selected");
       this.html_opt(this.selFullScan, "Нет", 2);
+      $('<p></p>').appendTo(divctrl);
+      this.span_cnt = $('<span></span>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
       this.span_info = $('<span></span>').appendTo(divctrl);
       f = $('<font size="7"></font>').appendTo($('#root'));

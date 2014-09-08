@@ -435,7 +435,8 @@ class DisplayBoard
         #будет ли доска реагировать на мышку
         @enabled=YES
         @busy=NO
-        @after_move=undefined    
+        @after_move=undefined      
+        @after_gover=undefined    
         @after_busy=undefined    
         @log_hist=undefined  
         
@@ -524,13 +525,15 @@ class DisplayBoard
             if not done
                 log_mess= "Ход юга "+ (@board.cell_count-i+1) 
                 mess= if @board.gover then @gover_msg() else "Ходите дальше!"
+                if @board.gover
+                    @after_gover() if @after_gover?
                 alert mess
                 finish=YES
             else
                 if @board.gover
                     alert "Game Over!"
                     finish=YES
-            
+                    @after_gover() if @after_gover?
         @draw()
         
         return if finish 
@@ -556,6 +559,7 @@ class DisplayBoard
         if @board.gameOver(1)
             @board.post_game_over(1)
             @draw()
+            @after_gover() if @after_gover?
             alert @gover_msg()
             
         @after_move() if @after_move?
@@ -565,6 +569,11 @@ class DisplayBoard
 class Kalah 
     constructor: ()->
         @board = new KalahBoard(8,6)
+        @init_cnt()
+
+    init_cnt:()->
+        @cn_robot=0
+        @cn_man=0
 
     newGame:(cell,seed,depth,cont_move,full_scan)->
         @board=new KalahBoard(cell,seed,cont_move==1)
@@ -608,18 +617,25 @@ class Kalah
         d.append(@db2.tbl)
         @div_hist.prepend(d)
       
+    after_gover:()->
+        if @board.field[1].man>@board.field[2].man then @cn_man++
+        if @board.field[2].man>@board.field[1].man then @cn_robot++
+        @span_cnt.html('Счет (север:юг) '+@cn_robot+":"+@cn_man)
     init: ()->
         @display_board = new DisplayBoard(@board)
         @display_board.log_hist=(side,cell)=>@log_hist(side,cell)
         @db2 = new DisplayBoard(@board)
         @db2.enabled=NO
         
-        @display_board.after_move = () => @info() 
+        @display_board.after_move = () => @info()
+        @display_board.after_gover = () => @after_gover()        
         @display_board.after_busy = () => @after_busy() 
 
         #@display_board.after_move = () => @span_info.html( 'Просмотрено позиций '+ @display_board.alg.cnt ) 
         divctrl = $('<div></div>').appendTo($('#root'))
+        
         btnInit = $('<button>Новая игра</button>').appendTo(divctrl)
+        btnOpts = $('<button>Настройки....</button>').appendTo(divctrl).click(()=>@opts.toggle())
         $('<p></p>').appendTo(divctrl)
 
         styleWOBord= 
@@ -630,7 +646,8 @@ class Kalah
             "padding": "0px"
                        
         
-        t=@html_table().css(styleWOBord).appendTo(divctrl)
+        t=@html_table().hide().css(styleWOBord).appendTo(divctrl)
+        @opts=t
         r=@html_tr(t)
         @html_td(r).css(styleWOBord).html('Лунок')
         
@@ -671,6 +688,8 @@ class Kalah
         @html_opt(@selFullScan,'Да',1).attr("selected", "selected");
         @html_opt(@selFullScan,"Нет",2)
         
+        $('<p></p>').appendTo(divctrl)
+        @span_cnt = $('<span></span>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
         @span_info = $('<span></span>').appendTo(divctrl)
         
