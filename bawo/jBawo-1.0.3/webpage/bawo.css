@@ -1,0 +1,59 @@
+body {
+  color: black; background: #990033;
+}
+
+/* links */
+a {
+text-decoration:none;font-weight:bold;
+}
+
+a:link {color:#336600;}      /* unvisited link */
+a:visited {color:#990033;}  /* visited link */
+a:hover {color:black;}  /* mouse over link */
+a:active {color:#000000;}  /* selected link */
+
+table {
+margin:auto;
+width: 600px;
+border-collapse: collapse;
+border: 1px solid black;
+background: white;
+}
+
+table.footer {
+margin:auto;
+width: 600px;
+/* border-collapse: collapse; */
+border: none;
+background: #990033;
+}
+
+th {
+background: #336600;
+color: white;
+font-family: "Courier New", Courier, monospace;
+text-align: left;
+}
+
+td {
+font-family:"Times New Roman", Times, serif;
+}
+
+td.left {
+text-align: left;
+}
+
+td.right {
+text-align: right;
+}
+
+td.center {
+text-align: center;
+}
+
+td.footer {
+width: 50%;
+color: silver;
+font-size:0.75em;
+}
+

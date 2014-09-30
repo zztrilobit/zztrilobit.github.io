@@ -1,0 +1,36 @@
+howto
+
+in the default setup, you (earthling) are Player 1 and own the bottom half of the board. the computer is Player 2 and owns the top half. these settings can be changed using the two list boxes which are appropriately labeled. i.e. various combinations like human vs human and different levels of computer levels are possible.
+
+in the "sowing" yokhoma mode of play, the stock on the right is yours. the one on the left is the computer's.
+
+the button labeled "<<" sets the board up for a new game.
+
+the button labeled "<" takes back the previous two moves if possible.
+
+use ">" to make Player 2 start.
+
+use "Bug Alert" to send an e-mail to the coder. currently this also sends the game history for debug purposes.
+
+the "Animation Delay" listbox should be self-explanatory. but i shall be more than delighted to explain its purpose to anyone who is unclear.
+
+moves can be clockwise or anticlockwise and can change direction during play. read the rules for more information. capture can only occur across the two middle ranks (rows).
+
+
+notation
+the starting bowl (a number between 0 and 15) and the direction ("C", "c" for
+clockwise or "A", "a" for anticlockwise.) of each move is displayed in the
+message line for guidance. in addition, the capitals "A" and "C" denote one
+side (upper half of the board), and the small letters "a" and "c" the other
+(lower half of the board). the notation used is different from that described
+in the http://www.gamecabinet.com/rules/Bao.html rules. the following numbering of the bowls is used:
+
+8  9 10 11 12 13 14 15
+7  6  5  4  3  2  1  0
+0  1  2  3  4  5  6  7
+15 14 13 12 11 10 9  8
+
+like the http://www.gamecabinet.com/rules/Bao.html rules, however, ">" means that the tokens of the nyumba are sown.
+
+
+copyright (c) 2000-2011 zangaphee chimombo <bawo AT zombasoft DOT com>

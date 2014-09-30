@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# compile *.java
+`javac *.java
+
+# archive *.class
+`jar -cmf manifest Bawo.jar *.class
+
+# move Bawo.jar to ../../webpage/
+`mv Bawo.jar ../../../webpage/
+
+# delete *.class
+`rm *.class

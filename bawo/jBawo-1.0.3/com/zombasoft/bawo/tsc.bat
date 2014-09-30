@@ -1,0 +1,1 @@
+cscript c:\ts\typescript\bin\tsc.js %1

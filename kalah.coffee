@@ -581,7 +581,7 @@ class Kalah
         @cn_robot=0
         @cn_man=0
 
-    newGame:(cell,seed,depth,cont_move,full_scan)->
+    newGame:(cell,seed,depth,cont_move,full_scan,first_step)->
         @board=new KalahBoard(cell,seed,cont_move==1)
         @display_board.set_board(@board)
         @div_b.html(' ')
@@ -590,6 +590,9 @@ class Kalah
         @display_board.alg.depth=depth
         @display_board.alg.fullscan=(full_scan==1)
         @div_hist.html('')
+        if first_step==2
+            @display_board.robot()
+        
         
     html_sel:()->
         $('<select><select>')
@@ -697,6 +700,12 @@ class Kalah
         @html_opt(@selFullScan,'Да',1).attr("selected", "selected");
         @html_opt(@selFullScan,"Нет",2)
         
+        r=@html_tr(t)
+        @html_td(r).css(styleWOBord).html('Первый ход')
+        @selFirstStep=@html_sel().appendTo(@html_td(r).css(styleWOBord))
+        @html_opt(@selFirstStep,'Человек',1).attr("selected", "selected");
+        @html_opt(@selFirstStep,"Робот",2)
+        
         $('<p></p>').appendTo(divctrl)
         @span_cnt = $('<span></span>').appendTo(divctrl)
         $('<p></p>').appendTo(divctrl)
@@ -707,14 +716,15 @@ class Kalah
         @div_hist=$('<p></p>').appendTo($('#root'))
         @div_hist=$('<p>История</p>').appendTo($('#root'))
         @div_hist=$('<div></div>').appendTo($('#root'))
-        @newGame(6,6,4,1,1)
+        @newGame(6,6,4,1,1,1)
         fngc= ()=>
             cc=parseInt(@selCell.val())
             sc=parseInt(@selSeed.val())
             d=parseInt(@selDepth.val())
             cm=parseInt(@selContMove.val())
             fs=parseInt(@selFullScan.val())
-            @newGame(cc,sc,d,cm,fs)
+            firstStep=parseInt(@selFirstStep.val())
+            @newGame(cc,sc,d,cm,fs,firstStep)
         btnInit.click( fngc )
         
     

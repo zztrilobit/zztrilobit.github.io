@@ -1,0 +1,55 @@
+jBawo1.0.3
+FIXED:
+"Stop or Continue" option coming after takata-ing 2 tokens from nyumba - ID: 3387140
+Player 1 moves: 5c
+Player 2's turn...
+Player 2 moves: 5C
+Player 1's turn...
+Player 1 moves: 6c
+Player 2's turn...
+Player 2 moves: 6A
+Player 1's turn...
+Player 1 moves: 4c
+Player 2's turn...
+Player 2 moves: 7A
+Player 2's turn... Stop OR Continue?
+Player 2 STOPS.
+Player 1's turn...
+Player 1 moves: 7c
+Player 2's turn...
+Player 2 moves: 5C
+Player 1's turn...
+Player 1 moves: 4a
+Player 1's turn... Stop OR Continue?
+
+Zanga Chimombo
+8 December 2011
+
+************************************************************************
+
+jBawo1.0.2
+FIXED:
+wrong Player 2 notation - ID: 3063331
+Player 2 notation is wrong when "human" is selected. (The bowl number range is 16-31 instead of 0-15).
+FIXED:
+wrongly allows takata back row tokens when nyumba is active - ID: 3085082
+When only the nyumba is active, takata should take one token from nyumba. The game moves to retrace this are as follows: 5c,5C,6c,6C,7c,7C, After these moves, the only these moves are possible: 8c, 8C|8a,8A, 9c,9C|9a,9A
+
+Zanga Chimombo
+14 November 2010
+
+************************************************************************
+
+jBawo1.0.1
+FIXED:
+stop or continue move allowed on kutakata - ID: 2999983
+version of jBawo at bawo.zombasoft.com seems to be out of date. allows stop or continue move on kutakata.
+FIXED:
+change directory structure - ID: 3003300
+package org.bawo needs to be changed to package com.zombasoft.bawo and the code repository directory structure needs to also change to reflect this.
+FIXED:
+wrongly disallows capturing from nyumba - ID: 3040085
+Disallows capturing from nyumba when it contains 16 tokens even during kukhoma stage. This indeed should be the case but only during mtaji stage. The game moves to retrace this are as follows: 5a,4A,2a,4A,2a,4A,2c,4A,7a,4A,6a,6A
+
+Zanga Chimombo
+29 August 2010

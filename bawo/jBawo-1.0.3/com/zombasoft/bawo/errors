@@ -1,0 +1,81 @@
+
+C:\trilobit\zztrilobit.github.io\bawo\jBawo-1.0.3\com\zombasoft\bawo>cscript c:\ts\typescript\bin\tsc.js Board.ts 
+Microsoft (R) Windows Script Host Version 5.8
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Board.ts(70,18): error TS1005: '=' expected.
+Board.ts(70,32): error TS1005: '=>' expected.
+Board.ts(86,11): error TS1005: '=' expected.
+Board.ts(86,31): error TS1005: ',' expected.
+Board.ts(86,36): error TS1005: ';' expected.
+Board.ts(117,13): error TS1005: ';' expected.
+Board.ts(118,14): error TS1005: ';' expected.
+Board.ts(119,14): error TS1005: ';' expected.
+Board.ts(120,17): error TS1005: ';' expected.
+Board.ts(211,54): error TS1005: ';' expected.
+Board.ts(214,20): error TS1005: ';' expected.
+Board.ts(218,22): error TS1005: ',' expected.
+Board.ts(218,29): error TS1005: ';' expected.
+Board.ts(222,21): error TS1005: ';' expected.
+Board.ts(226,13): error TS1005: ';' expected.
+Board.ts(226,25): error TS1005: ';' expected.
+Board.ts(228,9): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(231,11): error TS1005: ';' expected.
+Board.ts(231,32): error TS1005: ',' expected.
+Board.ts(231,43): error TS1005: ',' expected.
+Board.ts(231,48): error TS1005: ';' expected.
+Board.ts(249,13): error TS1005: ';' expected.
+Board.ts(250,14): error TS1005: ';' expected.
+Board.ts(251,17): error TS1005: ';' expected.
+Board.ts(260,13): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(343,31): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(352,9): error TS1109: Expression expected.
+Board.ts(352,11): error TS1005: ';' expected.
+Board.ts(352,22): error TS1005: ';' expected.
+Board.ts(356,13): error TS1005: ';' expected.
+Board.ts(356,26): error TS1109: Expression expected.
+Board.ts(357,13): error TS1005: ';' expected.
+Board.ts(381,9): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(384,11): error TS1005: ';' expected.
+Board.ts(384,15): error TS1109: Expression expected.
+Board.ts(384,17): error TS1005: ';' expected.
+Board.ts(384,30): error TS1005: ',' expected.
+Board.ts(384,37): error TS1005: ';' expected.
+Board.ts(386,47): error TS1005: ',' expected.
+Board.ts(389,11): error TS1005: ';' expected.
+Board.ts(389,15): error TS1109: Expression expected.
+Board.ts(389,17): error TS1005: ';' expected.
+Board.ts(389,30): error TS1005: ',' expected.
+Board.ts(389,41): error TS1005: ',' expected.
+Board.ts(389,51): error TS1005: ',' expected.
+Board.ts(389,63): error TS1005: ',' expected.
+Board.ts(389,73): error TS1005: ';' expected.
+Board.ts(394,13): error TS1005: ';' expected.
+Board.ts(394,20): error TS1109: Expression expected.
+Board.ts(394,33): error TS1109: Expression expected.
+Board.ts(401,13): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(423,13): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(425,27): error TS1005: ')' expected.
+Board.ts(425,44): error TS1005: ';' expected.
+Board.ts(433,47): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(440,31): error TS1005: ';' expected.
+Board.ts(454,33): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(458,9): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(461,11): error TS1005: ';' expected.
+Board.ts(461,18): error TS1005: ';' expected.
+Board.ts(461,37): error TS1005: ',' expected.
+Board.ts(461,43): error TS1005: ';' expected.
+Board.ts(462,13): error TS1005: ';' expected.
+Board.ts(473,9): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(476,11): error TS1005: ';' expected.
+Board.ts(476,18): error TS1005: ';' expected.
+Board.ts(476,38): error TS1005: ',' expected.
+Board.ts(476,50): error TS1005: ',' expected.
+Board.ts(476,53): error TS1005: ';' expected.
+Board.ts(479,13): error TS1005: ';' expected.
+Board.ts(480,16): error TS1005: ';' expected.
+Board.ts(484,13): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(487,13): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(494,31): error TS1005: ';' expected.
+Board.ts(501,9): error TS1108: A 'return' statement can only be used within a function body.
+Board.ts(503,1): error TS1128: Declaration or statement expected.

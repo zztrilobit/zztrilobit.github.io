@@ -1,0 +1,100 @@
+jBawo README file
+
+copyright (c) 2000-2011 zangaphee chimombo <bawo AT zombasoft DOT com>
+
+contents:
+1. about
+2. requirements
+3. installation
+4. compiling
+5. running
+6. howto
+7. known bugs
+8. wish list
+9. get involved
+10. licence
+
+1. about
+bawo is the Malawian version of an ancient African board game based around a simple counting apparatus. bawo (Malawi), bao (Tanzania) and omweso (Uganda) belong to the globally prevalent (spread by the African diaspora) "mancala" group of "count and capture" board games, the more complicated (four-rank) of which are played in Bantu Africa. bawo was played in some form in Kamit, "the land of blacks", ancient Egypt, and has even retained this name.
+
+although the apparatus required is simple (several holes in the ground and seeds of common trees suffice), bawo is as complex as checkers and even chess, sometimes. hence the subtitle: Simple Perplexity. join the mancalagames yahoo group for more information and an online community.
+
+jBawo 1.0 is a java program which allows single-user (against the computer) or dual-user playing of bawo via an internet browser or personal computer with Java installed.
+
+2. requirements
+jBawo can be played online at bawo.zombasoft.com (mirrored at bawo.sourceforge.net) via most browsers.
+
+jBawo can also run without an internet connection on Linux and other operating systems with Java installed on them. the Java Development Kit (JDK) required to compile and run jBawo as an application can be obtained from this website:
+http://java.sun.com/downloads/
+
+3. installation
+obtain jBawo "tarball" (.tar.gz file) from bawo.zombasoft.com (follow the links to the sourceforge project page). place the tarball in the directory you wish to run jBawo from and unzip it using:
+tar -zxvf jBawo.tgz
+in linux
+
+or by double clicking the jBawo1.0.tar.gz icon in Windows.
+
+the java source code is in the com/zombasoft/bawo/ subdirectory of the directory in which this README file is found.
+
+4. compiling
+(this step can be left out and the application run direclty from the supplied
+Bawo.jar file - see next step).
+go to the source directory (<installation-directory>/com/zombasoft/bawo).
+enter javac *.java
+
+where <installation-directory> is the jBawo directory to which the tarball was unzipped.
+
+the application can now be run directly from the compiled .class files. alternatively the .class files may be archived (and compressed) into a .jar file using:
+jar -cmf manifest Bawo.jar *.class
+
+5. running
+jBawo can be run from the Bawo.jar file provided, without having to compile from source code and without the JDK. the Java Runtime Environment (JRE) is required.
+java -jar <installation-directory>/webpage/Bawo.jar
+
+alternatively the application may be run from the .class files using:
+java <installation-directory>/com/zombasoft/bawo/Bawo
+
+6. howto
+jBawo is "learner friendly": hover the mouse pointer over a bowl from which a valid move can be made and it is highlighted. if it is not highlighted then a valid move cannot be made from that bowl.
+  
+read the howto file in this directory (also available on the website) for more help. the actual rules of Bawo are available online via bawo.zombasoft.com.
+
+enjoy!
+
+7. known bugs
+ - none.
+ 
+8. wish list
+ - the malawian opening
+ - 2 computer players (= demo mode)
+ - application mode: load saved game, save game, watch saved game options.
+ - Python
+ - Android
+ - Improved AI: opening database, timing algorithm
+ - Board editor
+ - Interactive notation pane
+ - valid moves should only be highlighted in a "learner mode" and is switch-offable.
+ - internationalisation. starting with ciNyanja (ciChewa), the main Malawian language.
+ - (inter)networked with chat facility.
+ - Mancala Game Engine and MAncala MArkup Language (MaMaL) i.e. Ncombwa
+ - command line interface (cli) mode
+ - Suggestions?
+
+9. get involved
+jBawo is open source. to find out more about open source visit www.gnu.org. if you would like to get involved in the jBawo project drop me an email at <bawo AT zombasoft DOT com>. There are many levels at which you can chip in to help an Open Source project. Non-programmers and programmers alike are encouraged to chip in to improve the software shared among the Open Source community.
+
+Ways in which you can contribute:
+ * Donate
+ * Report bugs
+ * Create documentation
+ * Join a project
+ * Submit patch files
+ * Revive an abandoned project
+ * Create a new project.
+
+Find out more at the following link:
+http://sourceforge.net/apps/trac/sourceforge/wiki/Overview%20of%20Open%20Source%20software%20development
+
+10. licence
+jBawo is distributed under the GNU Public Licence (www.gnu.org/licenses/gpl.html).
+

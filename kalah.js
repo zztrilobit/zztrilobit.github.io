@@ -768,7 +768,7 @@
       return this.cn_man = 0;
     };
 
-    Kalah.prototype.newGame = function(cell, seed, depth, cont_move, full_scan) {
+    Kalah.prototype.newGame = function(cell, seed, depth, cont_move, full_scan, first_step) {
       this.board = new KalahBoard(cell, seed, cont_move === 1);
       this.display_board.set_board(this.board);
       this.div_b.html(' ');
@@ -776,7 +776,10 @@
       this.display_board.draw();
       this.display_board.alg.depth = depth;
       this.display_board.alg.fullscan = full_scan === 1;
-      return this.div_hist.html('');
+      this.div_hist.html('');
+      if (first_step === 2) {
+        return this.display_board.robot();
+      }
     };
 
     Kalah.prototype.html_sel = function() {
@@ -915,6 +918,11 @@
       this.selFullScan = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
       this.html_opt(this.selFullScan, 'Да', 1).attr("selected", "selected");
       this.html_opt(this.selFullScan, "Нет", 2);
+      r = this.html_tr(t);
+      this.html_td(r).css(styleWOBord).html('Первый ход');
+      this.selFirstStep = this.html_sel().appendTo(this.html_td(r).css(styleWOBord));
+      this.html_opt(this.selFirstStep, 'Человек', 1).attr("selected", "selected");
+      this.html_opt(this.selFirstStep, "Робот", 2);
       $('<p></p>').appendTo(divctrl);
       this.span_cnt = $('<span></span>').appendTo(divctrl);
       $('<p></p>').appendTo(divctrl);
@@ -924,16 +932,17 @@
       this.div_hist = $('<p></p>').appendTo($('#root'));
       this.div_hist = $('<p>История</p>').appendTo($('#root'));
       this.div_hist = $('<div></div>').appendTo($('#root'));
-      this.newGame(6, 6, 4, 1, 1);
+      this.newGame(6, 6, 4, 1, 1, 1);
       fngc = (function(_this) {
         return function() {
-          var cc, cm, d, fs, sc;
+          var cc, cm, d, firstStep, fs, sc;
           cc = parseInt(_this.selCell.val());
           sc = parseInt(_this.selSeed.val());
           d = parseInt(_this.selDepth.val());
           cm = parseInt(_this.selContMove.val());
           fs = parseInt(_this.selFullScan.val());
-          return _this.newGame(cc, sc, d, cm, fs);
+          firstStep = parseInt(_this.selFirstStep.val());
+          return _this.newGame(cc, sc, d, cm, fs, firstStep);
         };
       })(this);
       return btnInit.click(fngc);
