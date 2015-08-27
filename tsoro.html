@@ -1,0 +1,24 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script src="jquery.js"></script>
+<script src="utils_jquery.js"></script>
+<script src="tsoro.js"></script>
+<script src="alpha_beta.js"></script>
+<script src="tsoro_view.js"></script>
+<script src="tsoro_game.js"></script>
+<script>
+$(document).ready(
+function(){
+
+        var g=new TsoroGame();
+        g.init(Utils.byId('root'));
+});
+</script>
+
+</head>
+<body>
+<div id="root"></div>
+<div id="ttt"></div>
+</body>
+</html>
