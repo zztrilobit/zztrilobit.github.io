@@ -16,6 +16,22 @@ var TsoroGame=(function(){
 		this.ng(8,2);
 		
 	};
+	proto.startGame7=function(){
+		this.ng(7,2);
+		
+	};
+	proto.startGame6=function(){
+		this.ng(6,2);
+		
+	};
+	proto.startGame5=function(){
+		this.ng(5,2);
+		
+	};
+	proto.startGame4=function(){
+		this.ng(4,2);
+		
+	};
 	
 	proto.log_move=function(p,i){
 		var v=new TsoroView();
@@ -58,6 +74,10 @@ var TsoroGame=(function(){
 		this.ctrl_place=this.tag("div").appendTo(place);
 		
 		this.btn('Играть',this.startGame).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Доска 7',this.startGame7).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Доска 6',this.startGame6).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Доска 5',this.startGame5).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Доска 4',this.startGame4).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
 		
 		this.brd_place=this.tag("div").appendTo(place);
 		this.alert_place=this.tag("div").appendTo(place);
@@ -71,6 +91,7 @@ var TsoroGame=(function(){
 			this.view.draw(b);
 			that=this;
 			setTimeout(function(){that.next_slide(nord_move);},500);
+			
 		} else {
 			this.view.draw(this.board);
 			if (nord_move) {
@@ -78,6 +99,9 @@ var TsoroGame=(function(){
 			    this.msg("думаю....");
 			    this.thinking=true;
 			    setTimeout(function(){that.nord_move();},100);
+			} else {
+				if (this.board.gameOver()) {this.gover_msg(); }else {this.cnt_msg();}
+			
 			};
 		}
 	};
@@ -89,6 +113,9 @@ var TsoroGame=(function(){
 				this.msg("Победа Юга");
 	};
 	
+	proto.cnt_msg=function(){
+		this.msg("Север: " + this.board.cnt_player(1) + "    Юг: "  + this.board.cnt_player(0))
+	};
 	proto.onclick=function(p,l,i){
 		
 		if (this.thinking) {
@@ -116,7 +143,6 @@ var TsoroGame=(function(){
 		
 		
 		if (this.board.gameOver()) {
-			this.gover_msg();
 			setTimeout(function(){that.next_slide(false);},500);
 			return;
 		};
