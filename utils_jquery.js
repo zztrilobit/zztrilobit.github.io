@@ -42,6 +42,12 @@ var Utils={
 		res.cells=cells;
 		return res;
 	},
+
+	button: function(caption){
+		var res=this.tag('button').html(caption);
+		res.el.button();
+		return res;
+        },
 	
 	tag: function(t){
 		var res=  $("<"+t+">"+"</"+t+">");

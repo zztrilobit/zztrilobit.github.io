@@ -16,8 +16,12 @@ var TsoroView=(function(){
 	proto.makeBoard=function(bs){
 		this.holes=[[],[]];
  		this.man=[];
+		this.hand=[];
 		this.bs=bs;
-		this.view_board=Utils.table(6,bs);
+		this.view_board=Utils.tag('div');
+		this.hand[1]=Utils.tag('div').css({"font-size": "x-large"}).appendTo(this.view_board)
+		var t=Utils.table(6,bs).appendTo(this.view_board);
+		this.hand[0]=Utils.tag('div').css({"font-size": "x-large"}).appendTo(this.view_board)
 		
 		
 		var i;
@@ -48,19 +52,19 @@ var TsoroView=(function(){
 		for(i=0; i<bs; i++){
 			var c,d;
 			//c= this.tag('div').appendTo(holes.cells[1][i]);
-			this.view_board.cells[0][i].css(styleHdr).html(bs-i);
-			this.view_board.cells[5][i].css(styleHdr).html(i+1);
+			t.cells[0][i].css(styleHdr).html(bs-i);
+			t.cells[5][i].css(styleHdr).html(i+1);
 			
-			c=this.view_board.cells[4][i].css(styleBody);
+			c=t.cells[4][i].css(styleBody);
 			this.holes[0][b.index(0,i)]=c;
 			
-			c=this.view_board.cells[3][i].css(styleBody);
+			c=t.cells[3][i].css(styleBody);
 			this.holes[0][b.index(1,i)]=c;
 			
-			c=this.view_board.cells[2][i].css(styleBody);
+			c=t.cells[2][i].css(styleBody);
 			this.holes[1][b.index(1,bs-1-i)]=c;
 			
-			c=this.view_board.cells[1][i].css(styleBody);
+			c=t.cells[1][i].css(styleBody);
 			this.holes[1][b.index(0,bs-1-i)]=c;
 			
 			}
@@ -94,10 +98,11 @@ var TsoroView=(function(){
 	proto.draw=function(b){
 		var i;
 		for (i=0;i<this.bs*2;i++){
-			this.holes[1][i].html(b.brd[1][i]);
-			this.holes[0][i].html(b.brd[0][i]);
+			this.holes[1][i].html( b.brd[1][i]!=0 ? b.brd[1][i] : '');
+			this.holes[0][i].html( b.brd[0][i]!=0 ? b.brd[0][i] : '');
 		};
-		
+		this.hand[0].html(b.hand[0] !=0 ? 'В руке ' + b.hand[0] : '');
+		this.hand[1].html(b.hand[1] !=0 ? 'В руке ' + b.hand[1] : '');
 	};
 	
 	return kv;

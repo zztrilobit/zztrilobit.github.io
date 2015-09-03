@@ -9,9 +9,13 @@ var TsoroGame=(function(){
 	};
 	proto.btn=function(txt,f){
 		var that=this;
-		return this.tag('button').html(txt).click(function(){f.apply(that);});
+		return Utils.button(txt).click(function(){f.apply(that);});
 	};
 	
+	proto.nrdmv=function(){
+		this.nord_move();
+		
+	};
 	proto.startGame=function(){
 		this.ng(8,2);
 		
@@ -78,6 +82,7 @@ var TsoroGame=(function(){
 		this.btn('Доска 6',this.startGame6).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
 		this.btn('Доска 5',this.startGame5).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
 		this.btn('Доска 4',this.startGame4).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Сходить за север',this.nrdmv).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
 		
 		this.brd_place=this.tag("div").appendTo(place);
 		this.alert_place=this.tag("div").appendTo(place);

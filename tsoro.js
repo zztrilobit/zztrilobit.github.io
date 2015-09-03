@@ -1,7 +1,7 @@
 var TsoroBoard=(function(){
 	var constr=function(){
 		this.brd=[[],[]];
-		
+		this.hand=[0,0];
 	};
 	
 	var proto=constr.prototype;
@@ -11,7 +11,9 @@ var TsoroBoard=(function(){
 		for (i=0;i<this.bs*2;i++) {
 			dst.brd[0][i]=this.brd[0][i];
 			dst.brd[1][i]=this.brd[1][i];
-		}
+		};
+		dst.hand[0]=this.hand[0];
+		dst.hand[1]=this.hand[1];
 	};
 	
 	proto.doMove=function(player,move) {
@@ -114,14 +116,17 @@ var TsoroBoard=(function(){
 		var line=m.line, cell=m.cell;
 		var my_side=this.brd[player];
 		var opp_side=this.brd[1-player];
+		this.hand[opp_side]=0;
 		
 		var curr=this.index(line,cell), cc=my_side[curr], done=cc==0;
 		my_side[curr]=0;
+		this.hand[player]=cc;
 		a.push(this.clone_new());
 		
 		while (!done) {
 				curr=curr==this.bs*2-1 ? 0 : curr+1;
 				my_side[curr]++;
+				this.hand[player]=cc;
 				a.push(this.clone_new());
 				cc--;
 				if (cc==0) {
@@ -143,6 +148,7 @@ var TsoroBoard=(function(){
 								if (cc>0) {
 									opp_side[i1]=0;
 									opp_side[i2]=0;
+									this.hand[player]=cc;
 									a.push(this.clone_new());
 								} else {
 									done=true;
