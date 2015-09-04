@@ -9,12 +9,13 @@ var KalahGame=(function(){
 	};
 	proto.btn=function(txt,f){
 		var that=this;
-		return this.tag('button').html(txt).click(function(){f.apply(that);});
+		return Utils.button(txt).click(function(){f.apply(that);});
 	};
 	
 	proto.startGame=function(){
-		this.ng(6,6);
+		this.ng(this.props.getInt('size') ,this.props.getInt('cnt'));
 		
+		if (this.props.getInt('nmove')==1) this.nord_move();
 	};
 	
 	proto.log_move=function(p,i){
@@ -37,7 +38,7 @@ var KalahGame=(function(){
 	
 		this.board=new KalahBoard();
 		this.board.makeBoard(bs);
-		this.board.fillBoard(bs);
+		this.board.fillBoard(seeds);
 		this.view.draw(this.board);
 	  
 		this.ki = new KalahAInterface(6);
@@ -52,12 +53,42 @@ var KalahGame=(function(){
 		this.alert_place.html(m);
 	};
 	
-	//разворачиваем себя в корневом элементе
+    proto.showProps=function(){
+		this.props.view.el.toggle();
+	};	//разворачиваем себя в корневом элементе
 	proto.init=function(place){
-		place.innerHTML;
+		place.html('');
 		this.ctrl_place=this.tag("div").appendTo(place);
 		
 		this.btn('Играть',this.startGame).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		
+				this.btn('Настройки',this.showProps).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		
+		this.props=p=new PropList();
+		
+		p.make([
+			{id:'size', caption:'Длина поля', type: 'select', 
+			  content: 
+			    {
+				4:'4',	5:'5',	6:'6',7:'7',8:'8', 
+				9:'9', 10:'10'
+				}
+			},
+			{id:'cnt', caption:'Фишек', type: 'select', 
+			  content: 
+			    {
+				4:'4',	5:'5',	6:'6'
+				}
+			},
+			{id:'nmove', caption:'Север начинает', type: 'select', 
+			  content: 
+			    {
+				0:'Нет',	1:'Да'
+				}
+			},
+        ],{"font-size":"x-large"});
+		p.view.appendTo(this.ctrl_place).hide();
+
 		
 		this.brd_place=this.tag("div").appendTo(place);
 		this.alert_place=this.tag("div").appendTo(place);
