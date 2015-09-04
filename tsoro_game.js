@@ -12,29 +12,13 @@ var TsoroGame=(function(){
 		return Utils.button(txt).click(function(){f.apply(that);});
 	};
 	
-	proto.nrdmv=function(){
-		this.nord_move();
-		
-	};
 	proto.startGame=function(){
-		this.ng(8,2);
-		
+		this.ng(this.props.getInt('size'),2);
+		if (this.props.getInt('nmove')==1)
+		   this.nord_move();
 	};
-	proto.startGame7=function(){
-		this.ng(7,2);
-		
-	};
-	proto.startGame6=function(){
-		this.ng(6,2);
-		
-	};
-	proto.startGame5=function(){
-		this.ng(5,2);
-		
-	};
-	proto.startGame4=function(){
-		this.ng(4,2);
-		
+	proto.showProps=function(){
+		this.props.view.el.toggle();
 	};
 	
 	proto.log_move=function(p,i){
@@ -78,11 +62,29 @@ var TsoroGame=(function(){
 		this.ctrl_place=this.tag("div").appendTo(place);
 		
 		this.btn('Играть',this.startGame).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
-		this.btn('Доска 7',this.startGame7).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
-		this.btn('Доска 6',this.startGame6).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
-		this.btn('Доска 5',this.startGame5).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
-		this.btn('Доска 4',this.startGame4).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
-		this.btn('Сходить за север',this.nrdmv).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		this.btn('Настройки',this.showProps).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
+		
+		this.props=p=new PropList();
+		
+		p.make([
+			{id:'size', caption:'Длина поля', type: 'select', 
+			  content: 
+			    {
+				4:'4',	5:'5',	6:'6',7:'7',8:'8', 
+				9:'9', 10:'10'
+				}
+			},
+			{id:'nmove', caption:'Север начинает', type: 'select', 
+			  content: 
+			    {
+				0:'Нет',	1:'Да'
+				}
+			},
+        ],{"font-size":"x-large"});
+		p.view.appendTo(this.ctrl_place).hide();
+
+		
+		//this.btn('Сходить за север',this.nrdmv).css({"font-size":"x-large"}).appendTo(this.ctrl_place);
 		
 		this.brd_place=this.tag("div").appendTo(place);
 		this.alert_place=this.tag("div").appendTo(place);

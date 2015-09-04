@@ -7,6 +7,21 @@ var Utils={
 			res.el.appendTo(a.el);
 			return res;
 		};
+		res.val=function(a){
+			return res.el.val(a);
+		};
+		res.css=function(c){
+			res.el.css(c);
+			return res;
+		};
+		res.show=function(){
+			res.el.show();
+			return res;
+		};
+		res.hide=function(){
+			res.el.hide();
+			return res;
+		};
 		res.css=function(c){
 			res.el.css(c);
 			return res;
@@ -45,9 +60,27 @@ var Utils={
 
 	button: function(caption){
 		var res=this.tag('button').html(caption);
-		res.el.button();
+		if (typeof(res.el.button)=='function' ) res.el.button();
 		return res;
         },
+
+	select: function(content,d_css){
+		var res=this.tag('select');
+			
+		if (typeof(d_css)!='undefined')	res.css(d_css);
+		var k;
+		for (k in content) {
+			if (content.hasOwnProperty(k)) {
+				var o=Utils.tag('option');
+				o.el.val(k);
+				o.html(content[k]);
+				o.appendTo(res);
+			}
+        };
+		//if (typeof(res.el.selectmenu)=='function' ) 
+		//	res.el.selectmenu().show();
+		return res;
+	},
 	
 	tag: function(t){
 		var res=  $("<"+t+">"+"</"+t+">");
