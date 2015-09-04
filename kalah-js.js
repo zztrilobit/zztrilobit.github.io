@@ -195,7 +195,7 @@ var KalahBoard=(function(){
 	//одиночный посев. если ход окончен - true, не окончен - false
 	proto.moveStep=function(player,cell){
 		var i=this.index(player,cell);
-		var done=false;
+		var done=this.brd[i]==0;
 		var esc_ind=this.k_ind[1-player];
 		var last=this.bs*2+1;
 		
