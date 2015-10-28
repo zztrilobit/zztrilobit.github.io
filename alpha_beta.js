@@ -111,7 +111,9 @@ var AlphaBeta= (function(){
 				
             brd.doMove(player,m);
             
-			if (brd.gameOver()) { r=iface.rate(brd,player) } else {
+			if (brd.gameOver())  { 
+				r=iface.rate(brd,player) 
+			} else {
 		        r=-this.ABPrun(brd,iface,opp,iface.inf_minus,iface.inf_plus,depth-1).rate
 			};
 			
@@ -169,7 +171,7 @@ var AlphaBeta= (function(){
 		
 		  var a=this.bestMoves(board,iface,side,d);
 		  // если не уложились по времени, уменьшаем глубину
-		  if (!this.overtaim) {
+		  if ((!this.overtaim) && (d<100)) {
 		     var i=Math.floor(Math.random() * ( a.length ));
 			 this.real_depth=d;
 		     result =a[i];
@@ -181,6 +183,10 @@ var AlphaBeta= (function(){
 			  iface.cnt_rates=cc;
 			  return result;
 		    };
+ 	          if ((new Date()).getTime()>this.plan) {
+			done=true;
+			};
+
 		  };
 		};
 	
