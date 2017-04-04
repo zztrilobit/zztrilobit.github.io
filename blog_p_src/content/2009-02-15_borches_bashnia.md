@@ -1,7 +1,7 @@
 ﻿Title: 2009-02-15 - Борхес - Вавилонская башня
 Date: 2009-02-15
 Author: trilobit
-Category: блог
+Category: книги
 Tags: старые отзывы
 Slug 2009-02-15_borches
 Status: published

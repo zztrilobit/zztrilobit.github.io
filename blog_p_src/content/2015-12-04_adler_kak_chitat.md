@@ -1,7 +1,7 @@
 ﻿Title: 2015-12-04 - Адлер: как читать книги
 Date: 2015-12-04 
 Author: trilobit
-Category: блог
+Category: книги
 Tags: старые выписки
 Slug 2015-12-04_adler
 Status: published
