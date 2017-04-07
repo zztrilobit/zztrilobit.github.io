@@ -1,0 +1,267 @@
+(;AP[GO_ASSISTENT:0.0.1]FF[4]GM[1]SZ[19]KM[0.0]PL[W]RU[Japanese]HA[4]AB[dd][pd][dp][pp];W[dj]
+;B[pj]C[ Hint: p10
+];W[cn]
+;B[fp]C[ Hint: f4
+];W[cf]
+;B[df]C[ Hint: d14
+];W[dg]
+;B[jd]C[
+];W[np]
+;B[ef]C[ Hint: e14
+];W[ce]
+;B[cd]C[ Hint: c16
+];W[md]
+;B[pf]C[ Hint: p14
+];W[mf]
+;B[jf]C[
+];W[qn]
+;B[oo]C[ Hint: o5
+];W[qq]
+;B[qp]C[ Hint: q4
+];W[pq]
+;B[rq]C[ Hint: r3
+];W[rr]
+;B[ro]C[
+];W[sq]
+;B[rp]C[ Hint: r4
+];W[hq]
+;B[fq]C[ Hint: f3
+];W[kq]
+;B[pn]C[ Hint: p6
+];W[bp]
+;B[cq]C[
+];W[bq]
+;B[em]C[ Hint: e7
+];W[dl]
+;B[gc]C[ Hint: g17
+];W[mh]
+;B[ph]C[ Hint: p12
+];W[oc]
+;B[nk]C[
+];W[pc]
+;B[qd]C[ Hint: q16
+];W[qc]
+;B[lc]C[ Hint: l17
+];W[mc]
+;B[lb]C[ Hint: l18
+];W[ld]
+;B[kd]C[
+];W[mb]
+;B[dn]C[ Hint: d6
+];W[cm]
+;B[ma]C[ Hint: m19
+];W[na]
+;B[la]C[ Hint: l19
+];W[ob]
+;B[fh]C[
+];W[mn]
+;B[co]C[ Hint: c5
+];W[bo]
+;B[bd]C[ Hint: b16
+];W[bf]
+;B[ho]C[ Hint: h5
+];W[gk]
+;B[jh]C[
+];W[el]
+;B[fm]C[ Hint: f7
+];W[hh]
+;B[rc]C[ Hint: r17
+];W[rb]
+;B[rd]C[ Hint: r16
+];W[cr]
+;B[dr]C[
+];W[cp]
+;B[dq]C[ Hint: d3
+];W[br]
+;B[hl]C[ Hint: h8
+];W[nq]
+;B[gr]C[ Hint: g2
+];W[ko]
+;B[lk]C[
+];W[gi]
+;B[ir]C[ Hint: i2
+];W[iq]
+;B[jr]C[ Hint: j2
+];W[jq]
+;B[kr]C[ Hint: k2
+];W[mr]
+;B[hr]C[
+];W[gg]
+;B[fg]C[ Hint: f13
+];W[gf]
+;B[ed]C[ Hint: e16
+];W[hd]
+;B[hc]C[ Hint: h17
+];W[hi]
+;B[jj]C[
+];W[sb]
+;B[nm]C[ Hint: n7
+];W[km]
+;B[he]C[ Hint: h15
+];W[ge]
+;B[gd]C[ Hint: g16
+];W[hf]
+;B[fe]C[
+];W[ie]
+;B[id]C[ Hint: i16
+];W[lr]
+;B[be]C[ Hint: b15
+];W[ae]
+;B[dh]C[ Hint: d12
+];W[ci]
+;B[eh]C[
+];W[ch]
+;B[ad]C[ Hint: a16
+];W[af]
+;B[fl]C[ Hint: f8
+];W[fk]
+;B[jl]C[ Hint: j8
+];W[og]
+;B[ni]C[
+];W[pg]
+;B[qf]C[ Hint: q14
+];W[qg]
+;B[rg]C[ Hint: r13
+];W[rh]
+;B[sg]C[ Hint: s13
+];W[qh]
+;B[rj]C[
+];W[qi]
+;B[qj]C[ Hint: q10
+];W[ri]
+;B[ii]C[ Hint: i11
+];W[of]
+;B[oe]C[ Hint: o15
+];W[pi]
+;B[oi]C[
+];W[ne]
+;B[od]C[ Hint: o16
+];W[hj]
+;B[oh]C[ Hint: o12
+];W[ik]
+;B[jk]C[ Hint: j9
+];W[il]
+;B[im]C[
+];W[jm]
+;B[in]C[ Hint: i6
+];W[ij]
+;B[ih]C[ Hint: i12
+];W[gl]
+;B[gm]C[ Hint: g7
+];W[sr]
+;B[ip]C[
+];W[mi]
+;B[kf]C[ Hint: k14
+];W[mj]
+;B[mm]C[ Hint: m7
+];W[nn]
+;B[on]C[ Hint: o6
+];W[lm]
+;B[ll]C[
+];W[nj]
+;B[oj]C[ Hint: o10
+];W[ki]
+;B[kh]C[ Hint: k12
+];W[ig]
+;B[lg]C[ Hint: l13
+];W[mg]
+;B[hp]C[
+];W[do]
+;B[eo]C[ Hint: e5
+];W[dm]
+;B[co]C[ Hint: c5
+];W[mk]
+;B[ml]C[ Hint: m8
+];W[no]
+;B[jp]C[
+];W[do]
+;B[kp]C[ Hint: k4
+];W[lp]
+;B[gq]C[ Hint: g3
+];W[lq]
+;B[en]C[ Hint: e6
+];W[ds]
+;B[es]C[
+];W[cs]
+;B[ls]C[ Hint: l1
+];W[ms]
+;B[ks]C[ Hint: k1
+];W[sh]
+;B[rf]C[ Hint: r14
+];W[nd]
+;B[di]C[
+];W[fi]
+;B[ei]C[ Hint: e11
+];W[ej]
+;B[jo]C[ Hint: j5
+];W[jn]
+;B[kl]C[ Hint: k8
+];W[lo]
+;B[kj]C[
+];W[lh]
+;B[lf]C[ Hint: l14
+];W[sp]
+;B[so]C[ Hint: s5
+];W[op]
+;B[ji]C[ Hint: j11
+];W[li]
+;B[jg]C[
+];W[sc]
+;B[if]C[ Hint: i14
+];W[he]
+;B[de]C[ Hint: d15
+];W[sd]
+;B[se]C[ Hint: s15
+];W[nh]
+;B[hg]C[
+];W[sj]
+;B[ig]C[ Hint: i13
+];W[ok]
+;B[ql]C[ Hint: q8
+];W[gh]
+;B[nl]C[ Hint: n8
+];W[sk]
+;B[rl]C[
+];W[rk]
+;B[pl]C[ Hint: p8
+];W[qk]
+;B[pk]C[ Hint: p9
+];W[sl]
+;B[sm]C[ Hint: s7
+];W[si]
+;B[rn]C[
+];W[le]
+;B[co]C[ Hint: c5
+];W[jb]
+;B[kb]C[ Hint: k18
+];W[do]
+;B[ng]C[ Hint: n13
+];W[nf]
+;B[eg]C[
+];W[cg]
+;B[co]C[ Hint: c5
+];W[re]
+;B[qe]C[ Hint: q15
+];W[do]
+;B[qr]C[ Hint: q2
+];W[pr]
+;B[qs]C[
+];W[ps]
+;B[rs]C[ Hint: c5
+];W[ss]
+;B[co]C[ Hint: c5
+];W[jc]
+;B[kc]C[ Hint: k17
+];W[do]
+;B[ic]C[
+];W[co]
+;B[hm]C[ Hint: h7
+];W[ff]
+;B[hk]C[ Hint: h9
+];W[je]
+;B[ke]C[ Hint: k15
+];W[lj]
+;B[];W[]
+;B[];W[]
+;B[];W[]
+;B[];W[])

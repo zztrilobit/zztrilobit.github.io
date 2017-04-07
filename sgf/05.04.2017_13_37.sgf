@@ -1,0 +1,209 @@
+(;AP[GO_ASSISTENT:0.0.1]FF[4]GM[1]SZ[19]KM[0.0]PL[W]RU[Japanese]HA[4]AB[dd][pd][dp][pp];W[cn]
+;B[dk]C[ Hint: d9
+];W[fq]
+;B[dn]C[ Hint: d6
+];W[dm]
+;B[en]C[ Hint: e6
+];W[co]
+;B[cp]C[ Hint: c4
+];W[em]
+;B[eq]C[ Hint: e3
+];W[fp]
+;B[fn]C[ Hint: f6
+];W[nc]
+;B[fm]C[ Hint: f7
+];W[cl]
+;B[fl]C[ Hint: f8
+];W[ck]
+;B[hq]C[ Hint: h3
+];W[er]
+;B[gr]C[ Hint: g2
+];W[kc]
+;B[pf]C[ Hint: p14
+];W[nq]
+;B[kp]C[ Hint: k4
+];W[no]
+;B[pn]C[ Hint: p6
+];W[pr]
+;B[qq]C[ Hint: q3
+];W[kr]
+;B[qj]C[ Hint: q10
+];W[fd]
+;B[df]C[ Hint: d14
+];W[dc]
+;B[ec]C[ Hint: e17
+];W[ed]
+;B[fc]C[ Hint: f17
+];W[cd]
+;B[de]C[ Hint: d15
+];W[db]
+;B[gc]C[ Hint: g17
+];W[ff]
+;B[ic]C[ Hint: i17
+];W[kq]
+;B[gd]C[ Hint: g16
+];W[ge]
+;B[eb]C[ Hint: e18
+];W[pb]
+;B[cc]C[ Hint: c17
+];W[qc]
+;B[bc]C[ Hint: b17
+];W[qr]
+;B[jp]C[ Hint: j4
+];W[mn]
+;B[qd]C[ Hint: q16
+];W[om]
+;B[pc]C[ Hint: p17
+];W[qb]
+;B[pm]C[ Hint: p7
+];W[cj]
+;B[km]C[ Hint: k7
+];W[ei]
+;B[gi]C[ Hint: g11
+];W[ml]
+;B[ch]C[ Hint: c12
+];W[kk]
+;B[fk]C[ Hint: f9
+];W[rq]
+;B[rp]C[ Hint: r4
+];W[rr]
+;B[ik]C[ Hint: i9
+];W[jl]
+;B[ep]C[ Hint: e4
+];W[jn]
+;B[ho]C[ Hint: h5
+];W[kn]
+;B[ii]C[ Hint: i11
+];W[pl]
+;B[ph]C[ Hint: p12
+];W[qm]
+;B[qn]C[ Hint: q6
+];W[rm]
+;B[bo]C[ Hint: b5
+];W[bn]
+;B[bp]C[ Hint: b4
+];W[bi]
+;B[bh]C[ Hint: b12
+];W[fj]
+;B[he]C[ Hint: h15
+];W[hf]
+;B[gj]C[ Hint: g10
+];W[lp]
+;B[ci]C[ Hint: c11
+];W[dj]
+;B[dl]C[ Hint: d8
+];W[rc]
+;B[rd]C[ Hint: r16
+];W[jb]
+;B[gg]C[ Hint: g13
+];W[aj]
+;B[gf]C[ Hint: g14
+];W[ie]
+;B[fe]C[ Hint: f15
+];W[hd]
+;B[ge]C[ Hint: g15
+];W[hb]
+;B[id]C[ Hint: i16
+];W[if]
+;B[hc]C[ Hint: h17
+];W[lf]
+;B[jf]C[ Hint: j14
+];W[je]
+;B[oj]C[ Hint: o10
+];W[ol]
+;B[gb]C[ Hint: g18
+];W[sd]
+;B[se]C[ Hint: s15
+];W[sc]
+;B[rf]C[ Hint: r14
+];W[rk]
+;B[rj]C[ Hint: r10
+];W[jg]
+;B[ib]C[ Hint: i18
+];W[nf]
+;B[nd]C[ Hint: n16
+];W[mc]
+;B[nh]C[ Hint: n12
+];W[md]
+;B[ne]C[ Hint: n15
+];W[of]
+;B[og]C[ Hint: o13
+];W[me]
+;B[oe]C[ Hint: o15
+];W[nj]
+;B[qk]C[ Hint: q9
+];W[rn]
+;B[ql]C[ Hint: q8
+];W[ro]
+;B[rl]C[ Hint: r8
+];W[sp]
+;B[eh]C[ Hint: e12
+];W[ir]
+;B[ni]C[ Hint: n11
+];W[mj]
+;B[fi]C[ Hint: f11
+];W[ej]
+;B[oc]C[ Hint: o17
+];W[ob]
+;B[hr]C[ Hint: h2
+];W[jq]
+;B[io]C[ Hint: i5
+];W[jo]
+;B[ip]C[ Hint: i4
+];W[ki]
+;B[lh]C[ Hint: l12
+];W[li]
+;B[in]C[ Hint: i6
+];W[jm]
+;B[jj]C[ Hint: j10
+];W[mg]
+;B[mh]C[ Hint: m12
+];W[il]
+;B[hl]C[ Hint: h8
+];W[ok]
+;B[pk]C[ Hint: p9
+];W[ja]
+;B[kg]C[ Hint: k13
+];W[kf]
+;B[is]C[ Hint: i1
+];W[js]
+;B[hs]C[ Hint: h1
+];W[ih]
+;B[hh]C[ Hint: h12
+];W[iq]
+;B[kh]C[ Hint: k12
+];W[kj]
+;B[jh]C[ Hint: j12
+];W[ig]
+;B[sm]C[ Hint: s7
+];W[sn]
+;B[sl]C[ Hint: s8
+];W[oo]
+;B[an]C[ Hint: a6
+];W[am]
+;B[ao]C[ Hint: a5
+];W[ia]
+;B[el]C[ Hint: e8
+];W[cm]
+;B[ha]C[ Hint: h19
+];W[jc]
+;B[jd]C[ Hint: j16
+];W[kd]
+;B[im]C[ Hint: i7
+];W[ko]
+;B[di]C[ Hint: d11
+];W[do]
+;B[ah]C[ Hint: a12
+];W[ai]
+;B[eo]C[ Hint: e5
+];W[ji]
+;B[jk]C[ Hint: j9
+];W[ng]
+;B[lg]C[ Hint: l13
+];W[mf]
+;B[hg]C[ Hint: h13
+];W[mi]
+;B[oh]C[ Hint: o12
+];W[ek]
+;B[sk]C[
+];W[])
