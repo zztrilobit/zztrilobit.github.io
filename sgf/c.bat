@@ -1,1 +1,1 @@
-C:\Python27\python.exe cataloger.py >c.html
+C:\Python27\python.exe cataloger.py >catalog.html
