@@ -24,12 +24,12 @@ yy= years.keys()
 yy.sort()
 
 for year in yy :
-    print "<p></p><p>{0}</p><p></p>".format(year)
-    mmm=years[y]
+    print "<p></p><h1>{0}</h1><p></p>".format(year)
+    mmm=years[year]
     mm=mmm.keys()
     mm.sort()
     for m in mm:
-        print "<p>{0}</p>".format(m)
+        print "<h2>{0}</h2>".format(m)
         for f in mmm[m]:
             print '<p><a href="http://eidogo.com/#url:http://raw.githubusercontent.com/zztrilobit/zztrilobit.github.io/master/sgf/{0}">{0}</a></p>'.format(f)
     

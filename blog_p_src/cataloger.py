@@ -1,6 +1,8 @@
 # -*- coding: cp1251 -*-
 import os
 import codecs
+import calendar
+
 files = os.listdir("..\\sgf")
 
 fn = filter(lambda x: x.endswith('.sgf'), files)
@@ -19,18 +21,19 @@ for f in fn :
         years[y][m].append(f) 
 
 prefix = ["Title: {0}-{1} Каталог партий",
-"Date: {0}-{1}-01",
+"Date: {0}-{1}-{2}",
 "Author: trilobit",
 "Category: го",
 "Tags: игра го",
-"Slug {0}-{1}-01-gogames",
+"Slug {0}-{1}-{2}-gogames",
 "Status: published"]
 
 def open_ym(y,m) :
-    f=codecs.open("content\\{0}.{1}.01_go_catalog.md".format(y,m),"w",encoding="utf-8")
+    d=calendar.monthrange(int(y), int(m))[1]
+    f=codecs.open("content\\{0}.{1}.{2}_go_catalog.md".format(y,m,d),"w",encoding="utf-8")
     #f=open("content\\{0}-{1}-01_go_catalog.md".format(y,m),"w")
     for i in prefix:
-        f.write(i.format(y,m).decode("cp1251"))
+        f.write(i.format(y,m,d).decode("cp1251"))
         f.write("\n")
     f.write("\n")
     f.write("\n")
@@ -43,6 +46,6 @@ for year in years.keys() :
     print year
     for m in years[year].keys():
         ff=open_ym(year,m)
-        for f in years[year][m]:
-            ff.write("[{0}](http://eidogo.com/#url:http://raw.githubusercontent.com/zztrilobit/zztrilobit.github.io/master/sgf/{0})\n\n".format(f))
+        for f in years[year][m]: 
+            ff.write("[{0}](http://eidogo.com/#url:https://raw.githubusercontent.com/zztrilobit/zztrilobit.github.io/master/sgf/{0})\n\n".format(f))
         ff.close()    
